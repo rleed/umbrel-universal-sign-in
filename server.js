@@ -380,6 +380,7 @@ function verify(id, message, sig, ...aux) {
 
 
 app.get(opts.route, function (req, res) {
+console.log(`c`)
 
   // sanity check domain name
   const proto = req.protocol
@@ -550,6 +551,7 @@ app.get(opts.route, function (req, res) {
 
 // intended as admin panel behind umbrel login
 app.get(`${opts.admin}`, function (req, res) {
+console.log(`b`)
 
   const proto = req.protocol
   const domain = req.get('host')
@@ -616,7 +618,8 @@ app.get(`${opts.admin}`, function (req, res) {
 
 // handles ancillary files (styles, etc.) when serving for a local umbrel instance
 app.get('/:path*', (req, res) => {
-  if (req.get('host').endsWith(':8766')) {
+console.log(`a`)
+  if (req.get('host').endsWith(':8767')) {
     res.redirect(`${req.protocol}://${req.hostname}:8765${req.originalUrl}`)
   } else {
     res.end();
