@@ -589,30 +589,32 @@ console.log(`b`)
 
   // get user details
   const queryUsers = () => {
-    fetch(`${opts.mattermost}/api/v4/users?inactive&in_team=${team_id}`, get_options)
-    .then(r => r.json()).then(json => {
-      users = json
-      getResults()
-    }).catch(e => {
-      console.log(`user query failed: ${e}`)
-      getResults()
-    })
+    users = []
+    getResults()
+//    fetch(`${opts.mattermost}/api/v4/users?inactive&in_team=${team_id}`, get_options)
+//    .then(r => r.json()).then(json => {
+//      users = json
+//      getResults()
+//    }).catch(e => {
+//      console.log(`user query failed: ${e}`)
+//      getResults()
+//    })
   }
 
   // find welcome team
-  if (!team_id) {
-    fetch(`${opts.mattermost}/api/v4/teams/name/welcome`, get_options).then(r => r.json()).then(json => {
-      if (json.name == 'welcome' && json.id) {
-        team_id = json.id
-        queryUsers()
-      } else {
-        console.log(`error finding welcome team: ${JSON.stringify(json)}`)
-        getResults()
-      }
-    })
-  } else {
+//  if (!team_id) {
+//    fetch(`${opts.mattermost}/api/v4/teams/name/welcome`, get_options).then(r => r.json()).then(json => {
+//      if (json.name == 'welcome' && json.id) {
+//        team_id = json.id
+//        queryUsers()
+//      } else {
+//        console.log(`error finding welcome team: ${JSON.stringify(json)}`)
+//        getResults()
+//      }
+//    })
+//  } else {
     queryUsers()
-  }
+//  }
 })
 
 
