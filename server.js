@@ -498,6 +498,7 @@ app.get(opts.session, function (req, res) {
         .replaceAll('{minihash}', minihash)
       const timestamp = block.timestamp
       let id, sig
+console.log(loginId, loginSig)
       if (loginId && loginSig) {
         verify(loginId, message, loginSig,
           template, domain, blocktime, minihash, timestamp
