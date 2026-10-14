@@ -417,7 +417,7 @@ const options = { expiresIn: '1h' }
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
-  res.set('Set-Cookie', `token=${token}; HttpOnly; Secure; SameSite=Strict`)
+  res.set('Set-Cookie', `usstoken=${token}; HttpOnly; Secure; SameSite=Strict`)
   res.status(200).send(`{"jwt":"${token}"}`)
   return
 })
