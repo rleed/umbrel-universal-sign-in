@@ -47,6 +47,11 @@ const options = {
     short: 'r',
     default: '/sign-in'
   },
+  session: {
+    type: 'string',
+    short: 's',
+    default: '/session'
+  },
   admin: {
     type: 'string',
     short: 'a',
@@ -378,6 +383,12 @@ function verify(id, message, sig, ...aux) {
 }
 
 
+
+app.get(opts.session, function (req, res) {
+console.log(`app.get(opts.session...`)
+  res.status(503).send('An error occurred: please inform the administrator.')
+  return
+})
 
 app.get(opts.route, function (req, res) {
 console.log(`c`)
