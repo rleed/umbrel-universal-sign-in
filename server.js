@@ -409,22 +409,54 @@ app.get(opts.session, function (req, res) {
   }
 
   const usstoken = req.cookies.usstoken
-  console.log('usstoken cookie', usstoken)
-
-const payload = { foo: 'bar' }
 const secretKey = 'shhhhh'
-const options = { expiresIn: '1h' }
 
-  const token = jwt.sign(payload, secretKey, options)
+  if (usstoken) {
+    let existingPayload
+    try {
+      existingPayload = jwt.verify(usstoken, secretKey)
+      console.log(`origin session accepted: ${origin} ${JSON.stringify(payload)}`)
+      res.set('Access-Control-Allow-Origin', `${origin}`)
+      res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+      res.set('Access-Control-Allow-Credentials', 'true')
+      res.status(200).send(JSON.stringify({"session":existingPayload}))
+      return
+    } catch (e) {
+      console.error('Token verification failed:', e.message);
+      res.status(503).send('{"error":"Invalid session token."}')
+      return
+    }
+  }
 
-  console.log(`origin accepted: ${origin}`)
-  res.set('Access-Control-Allow-Origin', `${origin}`)
-  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  res.set('Access-Control-Allow-Credentials', 'true')
-  res.set('Set-Cookie', `usstoken=${token}; HttpOnly; Secure; SameSite=Strict`)
-  res.status(200).send(JSON.stringify({"session":payload}))
-  return
+  fetch(`${opts.mempool}/api/blocks/tip/hash`).then(r => r.text()).then(text => {
+    const hash = text
+    if (!/[0-9a-f]/.test(hash)) {
+      console.error(`error getting block tip: ${text}`)
+      res.status(503).send('{"error":"The mempool service is unavailable: please inform the administrator."}')
+      return
+    }
+
+    fetch(`${opts.mempool}/api/block/${hash}`).then(r => r.json()).then(block => {
+      const b = block.height
+      const newPayload = { t: b }
+      const options = { expiresIn: '10m' }
+      const token = jwt.sign(newPayload, secretKey, options)
+      console.log(`origin accepted: ${origin}`)
+      res.set('Access-Control-Allow-Origin', `${origin}`)
+      res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+      res.set('Access-Control-Allow-Credentials', 'true')
+      res.set('Set-Cookie', `usstoken=${token}; HttpOnly; Secure; SameSite=Strict`)
+      res.status(200).send(JSON.stringify({"session":newPayload}))
+    }).catch(e => {
+      console.error(`error getting block ${hash}: ${e}`)
+      res.status(503).send(`{"error":"Unable to get block: ${e} (block hash: ${hash})"}`)
+    })
+  }).catch(e => {
+    console.error(`error getting blockchain tip: ${e}`)
+    res.status(503).send(`{"error":"Unable to get blockchain tip: ${e}"}`)
+  })
 })
 
 app.get(opts.route, function (req, res) {
