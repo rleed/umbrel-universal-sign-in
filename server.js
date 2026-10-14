@@ -386,14 +386,16 @@ function verify(id, message, sig, ...aux) {
 
 
 app.get(opts.session, function (req, res) {
-  console.log(`app.get(opts.session...`)
   const origin = req.headers['origin']
   if (!origin.startsWith('https://')) {
     res.status(503).send('{"error":"HTTPS is required."}')
     return
   }
   const domain = origin.toLowerCase().replace(/^https:\/\//, '')
-  console.log(origin, domain)
+  if (![].contians(domain)) {
+    res.status(503).send('{"error":"The origin domain is not allowed to access this resource."}')
+    return
+  }
   res.set('Access-Control-Allow-Origin', `${origin}`)
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
