@@ -410,15 +410,14 @@ const payload = { foo: 'bar' }
 const secretKey = 'shhhhh'
 const options = { expiresIn: '1h' }
 
-const token = jwt.sign(payload, secretKey, options)
-console.log(token)
+  const token = jwt.sign(payload, secretKey, options)
 
   console.log(`origin accepted: ${origin}`)
   res.set('Access-Control-Allow-Origin', `${origin}`)
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
-  res.status(503).send('{"error":"An error occurred: please inform the administrator."}')
+  res.status(503).send(`{"jwt":"${token}"}`)
   return
 })
 
