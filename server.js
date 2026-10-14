@@ -387,8 +387,8 @@ function verify(id, message, sig, ...aux) {
 
 app.get(opts.session, function (req, res) {
   console.log(`app.get(opts.session...`)
-  const proto = req.protocol
-  const domain = req.get('host')
+  const proto = req.headers['x-forwarded-proto'] // req.protocol
+  const domain = req.headers['x-forwarded-host'] // req.get('host')
   const xffor = req.headers['x-forwarded-for']
   console.log(proto, domain, xffor)
 // http://node144.satoshidnc.com:8767
