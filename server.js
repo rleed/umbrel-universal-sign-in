@@ -460,7 +460,6 @@ app.get(opts.session, function (req, res) {
         const newPayload = {
           t,
           id,
-          sig,
           form_of_id: match?.scheme,
         }
         const options = { expiresIn: '30d' }
