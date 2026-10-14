@@ -397,6 +397,7 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Origin', `${origin}`)
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.set('Access-Control-Allow-Credentials', 'true')
   res.status(503).send('An error occurred: please inform the administrator.')
   return
 })
