@@ -29,7 +29,7 @@ const options = {
     short: 'd',
     default: '',
   },
-  origins: {
+  domains: {
     type: 'string',
     short: 'o',
     default: '[]',
@@ -393,15 +393,18 @@ function verify(id, message, sig, ...aux) {
 app.get(opts.session, function (req, res) {
   const origin = req.headers['origin']
   if (!origin.startsWith('https://')) {
+    console.log(`protocol rejected: ${origin}`)
     res.status(503).send('{"error":"HTTPS is required."}')
     return
   }
   const domain = origin.toLowerCase().replace(/^https:\/\//, '')
-  const allowed_origins = JSON.parse(opts.origins)
-  if (!allowed_origins.contians(domain)) {
+  const allowed_domains = JSON.parse(opts.domains)
+  if (!allowed_domains.contians(domain)) {
+    console.log(`domain rejected: ${origin}`)
     res.status(503).send('{"error":"The origin domain is not allowed to access this resource."}')
     return
   }
+  console.log(`origin accepted: ${origin}`)
   res.set('Access-Control-Allow-Origin', `${origin}`)
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
