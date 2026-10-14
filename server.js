@@ -421,9 +421,6 @@ app.get(opts.session, function (req, res) {
     let existingPayload
     try {
       existingPayload = jwt.verify(usstoken, secret)
-      console.log(`origin session accepted: ${origin} ${JSON.stringify(payload)}`)
-      res.status(200).send(JSON.stringify({"session":existingPayload}))
-      return
     } catch (e) {
       console.error('Token verification failed:', e.message);
       res.status(200).send('{"error":"Invalid session token."}')
@@ -439,6 +436,9 @@ app.get(opts.session, function (req, res) {
       res.status(200).send('{"error":"Invalid session token."}')
       return
     }
+    console.log(`origin session accepted: ${origin} ${JSON.stringify(existingPayload)}`)
+    res.status(200).send(JSON.stringify({session:existingPayload}))
+    return
   }
 
   const url = `${opts.mempool}/blocks/tip/hash`
