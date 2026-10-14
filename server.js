@@ -417,7 +417,7 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Credentials', 'true')
 
   const usstoken = req.cookies.usstoken
-  if (usstoken && usstoken.t && usstoken.id) {
+  if (usstoken) {
     let existingPayload
     try {
       existingPayload = jwt.verify(usstoken, secret)
@@ -426,6 +426,16 @@ app.get(opts.session, function (req, res) {
       return
     } catch (e) {
       console.error('Token verification failed:', e.message);
+      res.status(200).send('{"error":"Invalid session token."}')
+      return
+    }
+    if (!existingPayload.t) {
+      console.error('Token is missing t:', existingPayload);
+      res.status(200).send('{"error":"Invalid session token."}')
+      return
+    }
+    if (!existingPayload.id) {
+      console.error('Token is missing id:', existingPayload);
       res.status(200).send('{"error":"Invalid session token."}')
       return
     }
