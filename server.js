@@ -399,7 +399,6 @@ app.get(opts.session, function (req, res) {
   }
   const domain = origin.toLowerCase().replace(/^https:\/\//, '')
   const allowed_domains = JSON.parse(opts.domains)
-  console.log(`allowed domains: ${JSON.stringify(allowed_domains)}`)
   if (!allowed_domains.includes(domain)) {
     console.log(`domain rejected: ${origin}`)
     res.status(503).send('{"error":"The origin domain is not allowed to access this resource."}')
