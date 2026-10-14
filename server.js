@@ -10,6 +10,7 @@ const qrlib = require('qrcode')
 const { Verifier } = require('bip322-js')
 const { bech32 } = require('bech32')
 const { schnorr } = require('@noble/curves/secp256k1')
+const jwt = require('jsonwebtoken')
 
 import('lowdb/node').then(lowdb_node => {
   JSONFile = lowdb_node.JSONFile
@@ -404,6 +405,14 @@ app.get(opts.session, function (req, res) {
     res.status(503).send('{"error":"The origin domain is not allowed to access this resource."}')
     return
   }
+
+const payload = { foo: 'bar' }
+const secretKey = 'shhhhh'
+const options = { expiresIn: '1h' }
+
+const token = jwt.sign(payload, secretKey, options)
+console.log(token)
+
   console.log(`origin accepted: ${origin}`)
   res.set('Access-Control-Allow-Origin', `${origin}`)
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
