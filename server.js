@@ -430,7 +430,7 @@ const secretKey = 'shhhhh'
     }
   }
 
-  fetch(`${opts.mempool}/api/blocks/tip/hash`).then(r => r.text()).then(text => {
+  fetch(`${opts.mempool}/blocks/tip/hash`).then(r => r.text()).then(text => {
     const hash = text
     if (!/[0-9a-f]/.test(hash)) {
       console.error(`error getting block tip: ${text}`)
@@ -438,7 +438,7 @@ const secretKey = 'shhhhh'
       return
     }
 
-    fetch(`${opts.mempool}/api/block/${hash}`).then(r => r.json()).then(block => {
+    fetch(`${opts.mempool}/block/${hash}`).then(r => r.json()).then(block => {
       const b = block.height
       const newPayload = { t: b }
       const options = { expiresIn: '10m' }
@@ -473,7 +473,7 @@ console.log(`c`)
   }
 
   // establish block time
-  fetch(`${opts.mempool}/api/blocks/tip/hash`).then(r => r.text()).then(text => {
+  fetch(`${opts.mempool}/blocks/tip/hash`).then(r => r.text()).then(text => {
 
     const hash = text
     if (!/[0-9a-f]/.test(hash)) {
@@ -482,7 +482,7 @@ console.log(`c`)
       return
     }
 
-    fetch(`${opts.mempool}/api/block/${hash}`).then(r => r.json()).then(block => {
+    fetch(`${opts.mempool}/block/${hash}`).then(r => r.json()).then(block => {
       const b = block.height
       const y = Math.floor(b / 52500)
       const yb = b % 52500
@@ -572,7 +572,7 @@ console.log(`c`)
 /*
             if (match.scheme == 'Bitcoin Signed Message') {
               screenUser = new Promise((resolve, reject) => {
-                fetch(`${opts.mempool}/api/address/${loginId}/txs`).then(r => r.json()).then(json => {
+                fetch(`${opts.mempool}/address/${loginId}/txs`).then(r => r.json()).then(json => {
                   txs = json
                   if (txs.length == 0) {
                     reject('Bitcoin address not found on blockchain: use another.')
