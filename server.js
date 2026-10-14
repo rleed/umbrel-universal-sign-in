@@ -461,22 +461,24 @@ app.get(opts.session, function (req, res) {
           t,
           id,
           sig,
-          form_of_id: match.scheme,
+          form_of_id: match?.scheme,
         }
         const options = { expiresIn: '30d' }
         const token = jwt.sign(newPayload, secret, options)
-        console.log(`successful login by ${match.loginId}`)
-        activity.data.push({
-          date: Date.now(),
-          status: 'success',
-          presented: loginId,
-          scheme: match.scheme,
-          id: match.loginId,
-          message: match.message,
-          template: opts.message,
-          sig: match.sig,
-        })
-        activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+        if (id && sig && match) {
+          console.log(`successful login by ${match.loginId}`)
+          activity.data.push({
+            date: Date.now(),
+            status: 'success',
+            presented: loginId,
+            scheme: match.scheme,
+            id: match.loginId,
+            message: match.message,
+            template: opts.message,
+            sig: match.sig,
+          })
+          activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+        }
         res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
         res.status(200).send(JSON.stringify({"session":newPayload}))
       }
