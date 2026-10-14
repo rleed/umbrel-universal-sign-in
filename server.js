@@ -67,7 +67,7 @@ const options = {
   mempool: {
     type: 'string',
     short: 'm',
-    default: 'https://mempool.space',
+    default: 'https://mempool.guide/api',
   },
   team: {
     type: 'string',
