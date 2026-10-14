@@ -100,6 +100,7 @@ let team_id = undefined
 
 var app = express()
 var app_options = {}
+app.set('trust proxy', true)
 
 
 function base64ToBytes(base64) {
@@ -388,7 +389,9 @@ app.get(opts.session, function (req, res) {
   console.log(`app.get(opts.session...`)
   const proto = req.protocol
   const domain = req.get('host')
-  console.log(proto, domain)
+  const xffor = req.headers['x-forwarded-for']
+  console.log(proto, domain, xffor)
+// http://node144.satoshidnc.com:8767
   res.set('Access-Control-Allow-Origin', `${proto}://${domain}`)
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
