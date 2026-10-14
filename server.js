@@ -572,6 +572,7 @@ app.get(opts.session, function (req, res) {
           }
         }).catch(e => {
           console.log(`signature verification failed for ${loginId}: ${e}`)
+          console.log(`expected message: ${opts.message}`)
           res.status(200).send(`{"error":"Improperly signed: try again."}`)
         })
       } else {
