@@ -29,6 +29,11 @@ const options = {
     short: 'd',
     default: '',
   },
+  origins: {
+    type: 'string',
+    short: 'o',
+    default: '[]',
+  },
   mattermost: {
     type: 'string',
     short: 'i',
@@ -392,7 +397,8 @@ app.get(opts.session, function (req, res) {
     return
   }
   const domain = origin.toLowerCase().replace(/^https:\/\//, '')
-  if (![].contians(domain)) {
+  const allowed_origins = JSON.parse(opts.origins)
+  if (!allowed_origins.contians(domain)) {
     res.status(503).send('{"error":"The origin domain is not allowed to access this resource."}')
     return
   }
