@@ -430,7 +430,8 @@ const secretKey = 'shhhhh'
     }
   }
 
-  fetch(`${opts.mempool}/blocks/tip/hash`).then(r => r.text()).then(text => {
+  const url = `${opts.mempool}/blocks/tip/hash`
+  fetch(url).then(r => r.text()).then(text => {
     const hash = text
     if (!/[0-9a-f]/.test(hash)) {
       console.error(`error getting block tip: ${text}`)
@@ -438,7 +439,8 @@ const secretKey = 'shhhhh'
       return
     }
 
-    fetch(`${opts.mempool}/block/${hash}`).then(r => r.json()).then(block => {
+    const url = `${opts.mempool}/block/${hash}`
+    fetch(url).then(r => r.json()).then(block => {
       const b = block.height
       const newPayload = { t: b }
       const options = { expiresIn: '10m' }
@@ -451,12 +453,12 @@ const secretKey = 'shhhhh'
       res.set('Set-Cookie', `usstoken=${token}; HttpOnly; Secure; SameSite=Strict`)
       res.status(200).send(JSON.stringify({"session":newPayload}))
     }).catch(e => {
-      console.error(`error getting block ${hash}: ${e}`)
-      res.status(200).send(`{"error":"Unable to get block: ${e} (block hash: ${hash})"}`)
+      console.error(`error getting block: ${e}: ${url}`)
+      res.status(200).send(`{"error":"Unable to get block: ${url}"}`)
     })
   }).catch(e => {
-    console.error(`error getting blockchain tip: ${e}`)
-    res.status(200).send(`{"error":"Unable to get blockchain tip: ${e}"}`)
+    console.error(`error getting blockchain tip: ${e}: ${url}`)
+    res.status(200).send(`{"error":"Unable to get blockchain tip: ${url}"}`)
   })
 })
 
