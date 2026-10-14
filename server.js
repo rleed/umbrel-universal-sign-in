@@ -56,7 +56,7 @@ const options = {
   session: {
     type: 'string',
     short: 's',
-    default: '/session'
+    default: '/api/v1/session'
   },
   admin: {
     type: 'string',
