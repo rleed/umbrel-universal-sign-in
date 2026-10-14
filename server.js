@@ -418,9 +418,10 @@ app.get(opts.session, function (req, res) {
 
   const loginId  = req.query.id
   const loginSig = req.query.sig
+  const logout   = req.query.logout
   const usstoken = req.cookies.usstoken
 
-  if (!loginId && !loginSig && usstoken) {
+  if (!loginId && !loginSig && !logout && usstoken) {
     let existingPayload
     try {
       existingPayload = jwt.verify(usstoken, secret)
@@ -498,8 +499,9 @@ app.get(opts.session, function (req, res) {
         .replaceAll('{minihash}', minihash)
       const timestamp = block.timestamp
       let id, sig
-console.log(loginId, loginSig)
-      if (loginId && loginSig) {
+      if (logout) {
+        finisher(b, randomBytes(32).toString('hex'), undefined, undefined)
+      } else if (loginId || loginSig) {
         verify(loginId, message, loginSig,
           template, domain, blocktime, minihash, timestamp
         ).then(match => {
