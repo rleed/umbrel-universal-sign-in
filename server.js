@@ -411,7 +411,7 @@ app.get(opts.session, function (req, res) {
   const usstoken = req.cookies.usstoken
 const secretKey = 'shhhhh'
 
-  if (usstoken) {
+  if (usstoken && usstoken.t) {
     let existingPayload
     try {
       existingPayload = jwt.verify(usstoken, secretKey)
