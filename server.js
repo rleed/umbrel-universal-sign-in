@@ -455,31 +455,27 @@ app.get(opts.session, function (req, res) {
 
     const url = `${opts.mempool}/block/${hash}`
     fetch(url).then(r => r.json()).then(block => {
-      const finisher = (t, id, sig) => {
+      const finisher = (t, id, sig, match) => {
         const newPayload = {
           t,
           id,
           sig,
+          form_of_id: match.scheme,
         }
         const options = { expiresIn: '30d' }
         const token = jwt.sign(newPayload, secret, options)
-        console.log(`origin accepted: ${origin}`)
-
-                console.log(`successful login by ${match.loginId}`)
-                res.redirect('/')
-                activity.data.push({
-                  date: Date.now(),
-                  status: 'success',
-                  presented: loginId,
-                  scheme: match.scheme,
-                  id: match.loginId,
-                  message: match.message,
-                  template: template,
-                  sig: match.sig,
-                  user: detail.id
-                })
-                activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
-
+        console.log(`successful login by ${match.loginId}`)
+        activity.data.push({
+          date: Date.now(),
+          status: 'success',
+          presented: loginId,
+          scheme: match.scheme,
+          id: match.loginId,
+          message: match.message,
+          template: opts.message,
+          sig: match.sig,
+        })
+        activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
         res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
         res.status(200).send(JSON.stringify({"session":newPayload}))
       }
@@ -555,7 +551,7 @@ app.get(opts.session, function (req, res) {
             }
 */
             screenUser.then(() => {
-              finisher(b, loginId, loginSig)
+              finisher(b, loginId, loginSig, match)
             }).catch(e => {
               console.log(`blocked ${match.loginId}: ${e}`)
               activity.data.push({
@@ -579,7 +575,7 @@ app.get(opts.session, function (req, res) {
           res.status(200).send(`{"error":"Improperly signed: try again."}`)
         })
       } else {
-        finisher(b, randomBytes(32).toString('hex'), undefined)
+        finisher(b, randomBytes(32).toString('hex'), undefined, undefined)
       }
     }).catch(e => {
       console.error(`error getting block: ${e}: ${url}`)
