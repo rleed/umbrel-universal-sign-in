@@ -12,6 +12,7 @@ const { bech32 } = require('bech32')
 const { schnorr } = require('@noble/curves/secp256k1')
 const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
+const { randomBytes } = require('node:crypto');
 
 import('lowdb/node').then(lowdb_node => {
   JSONFile = lowdb_node.JSONFile
@@ -416,7 +417,7 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Credentials', 'true')
 
   const usstoken = req.cookies.usstoken
-  if (usstoken && usstoken.t) {
+  if (usstoken && usstoken.t && usstoken.id) {
     let existingPayload
     try {
       existingPayload = jwt.verify(usstoken, secret)
@@ -442,9 +443,10 @@ app.get(opts.session, function (req, res) {
     const url = `${opts.mempool}/block/${hash}`
     fetch(url).then(r => r.json()).then(block => {
       const b = block.height
+      const id = randomBytes(32).toString('hex')
       const newPayload = {
         t: b,
-        id: undefined,
+        id,
       }
       const options = { expiresIn: '30d' }
       const token = jwt.sign(newPayload, secret, options)
