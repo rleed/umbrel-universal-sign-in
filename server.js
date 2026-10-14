@@ -418,7 +418,7 @@ const options = { expiresIn: '1h' }
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
   res.set('Set-Cookie', `usstoken=${token}; HttpOnly; Secure; SameSite=Strict`)
-  res.status(200).send(`{"jwt":"${token}"}`)
+  res.status(200).send(`{"session":"${JSON.stringify(payload)}"}`)
   return
 })
 
