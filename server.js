@@ -388,12 +388,13 @@ function verify(id, message, sig, ...aux) {
 app.get(opts.session, function (req, res) {
   console.log(`app.get(opts.session...`)
   const origin = req.headers['origin']
-  const proto = req.headers['x-forwarded-proto'] // req.protocol
-  const domain = req.headers['x-forwarded-host'] // req.get('host')
-  const xffor = req.headers['x-forwarded-for']
-  console.log('xff', origin, proto, domain, xffor)
-// http://node144.satoshidnc.com:8767
-  res.set('Access-Control-Allow-Origin', `${proto}://${domain}`)
+  if (!origin.startsWith('https://')) {
+    res.status(503).send('HTTPS is required.')
+    return
+  }
+  const domain = origin.toLowerCase().replace(/^https:\/\//, '')
+  console.log(origin, domain)
+  res.set('Access-Control-Allow-Origin', `${origin}`)
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.status(503).send('An error occurred: please inform the administrator.')
