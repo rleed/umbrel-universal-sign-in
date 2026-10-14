@@ -20,7 +20,7 @@ import('lowdb').then(lowdb => {
 import('@nostr/tools/pure').then(nostr_tools_pure => {
   const { getEventHash } = nostr_tools_pure
 
-const secret = process.env.SECRET
+const secret = process.env.DNC_US_SECRET
 
 const options = {
   port: {
