@@ -1,1 +1,1 @@
-# umbrel-mattermost-universal-sign-in
+# Universal Sign-in app for Umbrel
