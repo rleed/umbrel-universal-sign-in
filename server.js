@@ -20,6 +20,8 @@ import('lowdb').then(lowdb => {
 import('@nostr/tools/pure').then(nostr_tools_pure => {
   const { getEventHash } = nostr_tools_pure
 
+const secret = process.env.SECRET
+
 const options = {
   port: {
     type: 'string',
@@ -414,12 +416,10 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Credentials', 'true')
 
   const usstoken = req.cookies.usstoken
-const secretKey = 'shhhhh'
-
   if (usstoken && usstoken.t) {
     let existingPayload
     try {
-      existingPayload = jwt.verify(usstoken, secretKey)
+      existingPayload = jwt.verify(usstoken, secret)
       console.log(`origin session accepted: ${origin} ${JSON.stringify(payload)}`)
       res.status(200).send(JSON.stringify({"session":existingPayload}))
       return
@@ -442,15 +442,14 @@ const secretKey = 'shhhhh'
     const url = `${opts.mempool}/block/${hash}`
     fetch(url).then(r => r.json()).then(block => {
       const b = block.height
-      const newPayload = { t: b }
-      const options = { expiresIn: '10m' }
-      const token = jwt.sign(newPayload, secretKey, options)
+      const newPayload = {
+        t: b,
+        id: undefined,
+      }
+      const options = { expiresIn: '30d' }
+      const token = jwt.sign(newPayload, secret, options)
       console.log(`origin accepted: ${origin}`)
-      res.set('Access-Control-Allow-Origin', `${origin}`)
-      res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-      res.set('Access-Control-Allow-Credentials', 'true')
-      res.set('Set-Cookie', `usstoken=${token}; HttpOnly; Secure; SameSite=Strict`)
+      res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
       res.status(200).send(JSON.stringify({"session":newPayload}))
     }).catch(e => {
       console.error(`error getting block: ${e}: ${url}`)
