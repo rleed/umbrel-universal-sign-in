@@ -386,6 +386,9 @@ function verify(id, message, sig, ...aux) {
 
 app.get(opts.session, function (req, res) {
 console.log(`app.get(opts.session...`)
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.status(503).send('An error occurred: please inform the administrator.')
   return
 })
