@@ -11,6 +11,7 @@ const { Verifier } = require('bip322-js')
 const { bech32 } = require('bech32')
 const { schnorr } = require('@noble/curves/secp256k1')
 const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 
 import('lowdb/node').then(lowdb_node => {
   JSONFile = lowdb_node.JSONFile
@@ -107,6 +108,7 @@ let team_id = undefined
 var app = express()
 var app_options = {}
 app.set('trust proxy', true)
+app.use(cookieParser())
 
 
 function base64ToBytes(base64) {
@@ -405,6 +407,9 @@ app.get(opts.session, function (req, res) {
     res.status(503).send('{"error":"The origin domain is not allowed to access this resource."}')
     return
   }
+
+  const usstoken = req.cookies.usstoken
+  console.log('usstoken cookie', usstoken)
 
 const payload = { foo: 'bar' }
 const secretKey = 'shhhhh'
