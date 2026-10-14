@@ -389,7 +389,7 @@ app.get(opts.session, function (req, res) {
   console.log(`app.get(opts.session...`)
   const origin = req.headers['origin']
   if (!origin.startsWith('https://')) {
-    res.status(503).send('HTTPS is required.')
+    res.status(503).send('{"error":"HTTPS is required."}')
     return
   }
   const domain = origin.toLowerCase().replace(/^https:\/\//, '')
@@ -398,7 +398,7 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
-  res.status(503).send('An error occurred: please inform the administrator.')
+  res.status(503).send('{"error":"An error occurred: please inform the administrator."}')
   return
 })
 
