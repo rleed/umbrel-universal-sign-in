@@ -416,8 +416,11 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
 
+  const loginId  = req.query.id
+  const loginSig = req.query.sig
   const usstoken = req.cookies.usstoken
-  if (usstoken) {
+
+  if (!loginId && !loginSig && usstoken) {
     let existingPayload
     try {
       existingPayload = jwt.verify(usstoken, secret)
@@ -452,17 +455,132 @@ app.get(opts.session, function (req, res) {
 
     const url = `${opts.mempool}/block/${hash}`
     fetch(url).then(r => r.json()).then(block => {
-      const b = block.height
-      const id = randomBytes(32).toString('hex')
-      const newPayload = {
-        t: b,
-        id,
+      const finisher = (t, id, sig) => {
+        const newPayload = {
+          t,
+          id,
+          sig,
+        }
+        const options = { expiresIn: '30d' }
+        const token = jwt.sign(newPayload, secret, options)
+        console.log(`origin accepted: ${origin}`)
+
+                console.log(`successful login by ${match.loginId}`)
+                res.redirect('/')
+                activity.data.push({
+                  date: Date.now(),
+                  status: 'success',
+                  presented: loginId,
+                  scheme: match.scheme,
+                  id: match.loginId,
+                  message: match.message,
+                  template: template,
+                  sig: match.sig,
+                  user: detail.id
+                })
+                activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+
+        res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
+        res.status(200).send(JSON.stringify({"session":newPayload}))
       }
-      const options = { expiresIn: '30d' }
-      const token = jwt.sign(newPayload, secret, options)
-      console.log(`origin accepted: ${origin}`)
-      res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
-      res.status(200).send(JSON.stringify({"session":newPayload}))
+      const b = block.height
+      const y = Math.floor(b / 52500)
+      const yb = b % 52500
+      const ym = Math.floor(yb / 4375)
+      const ymb = yb % 4375
+      const ymd = Math.floor(ymb / 144)
+      const ymdb = ymb % 144
+      const th = Math.floor(ymdb / 6)
+      const thb = ymdb % 6
+      const tm = thb * 10
+      const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
+      const minihash = hash.slice(-4)
+      const template = opts.message
+      const message = template
+        .replaceAll('{domain}', domain)
+        .replaceAll('{blocktime}', blocktime)
+        .replaceAll('{minihash}', minihash)
+      const timestamp = block.timestamp
+      let id, sig
+      if (loginId || loginSig) {
+        verify(loginId, message, loginSig,
+          template, domain, blocktime, minihash, timestamp
+        ).then(match => {
+          console.log(`received ${match.scheme} by ${match.loginId}`)
+          const date_now = Date.now()
+          const prevTemplate = activity.data.reduce((a, c) => {
+            let age = date_now - c.date
+            if (['success', 'new-terms'].includes(c.status) && !isNaN(c.date) && c.template && (!a.age || age < a.age)) {
+              return { age, template: c.template }
+            } else {
+              return a
+            }
+          }, { age: 0, template: '' }).template
+          const prevTemplateFilled = prevTemplate
+            .replaceAll('{domain}', domain)
+            .replaceAll('{blocktime}', blocktime)
+            .replaceAll('{minihash}', minihash)
+          if (false) { // if (prevTemplateFilled != message) {
+            console.log(`terms changed for ${loginId}`)
+            console.log(`old: ${prevTemplateFilled}`)
+            console.log(`new: ${message}`)
+            res.redirect(`${opts.route}?signinfo=The+sign-in+message+has+changed+since+you+last+signed+in.+Please+re-read+it+carefully+before+proceeding.`)
+            activity.data.push({
+              date: Date.now(),
+              status: 'new-terms',
+              presented: loginId,
+              scheme: match.scheme,
+              id: match.loginId,
+              message: match.message,
+              template: template,
+              sig: match.sig
+            })
+            activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+          } else {
+            let screenUser = new Promise((resolve, reject) => {
+              resolve()
+            })
+/*
+            if (match.scheme == 'Bitcoin Signed Message') {
+              screenUser = new Promise((resolve, reject) => {
+                fetch(`${opts.mempool}/address/${loginId}/txs`).then(r => r.json()).then(json => {
+                  txs = json
+                  if (txs.length == 0) {
+                    reject('Bitcoin address not found on blockchain: use another.')
+                  } else {
+                    resolve()
+                  }
+                })
+              })
+            }
+*/
+            screenUser.then(() => {
+              finisher(b, loginId, loginSig)
+            }).catch(e => {
+              console.log(`blocked ${match.loginId}: ${e}`)
+              activity.data.push({
+                date: Date.now(),
+                status: 'blocked',
+                presented: loginId,
+                scheme: match.scheme,
+                id: match.loginId,
+                message: match.message,
+                template: template,
+                sig: match.sig,
+              })
+              activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+              console.error(`blocked user: ${e}`)
+              res.status(200).send(`{"error":"Access denied: ${e}"}`)
+              return
+            })
+          }
+        }).catch(e => {
+          console.log(`signature verification failed for ${loginId}: ${e}`)
+          res.status(200).send(`{"error":"Improperly signed: try again."}`)
+        })
+      } else {
+        finisher(b, randomBytes(32).toString('hex'), undefined)
+      }
     }).catch(e => {
       console.error(`error getting block: ${e}: ${url}`)
       res.status(200).send(`{"error":"Unable to get block: ${url}"}`)
