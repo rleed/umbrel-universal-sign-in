@@ -408,6 +408,11 @@ app.get(opts.session, function (req, res) {
     return
   }
 
+  res.set('Access-Control-Allow-Origin', `${origin}`)
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.set('Access-Control-Allow-Credentials', 'true')
+
   const usstoken = req.cookies.usstoken
 const secretKey = 'shhhhh'
 
@@ -416,15 +421,11 @@ const secretKey = 'shhhhh'
     try {
       existingPayload = jwt.verify(usstoken, secretKey)
       console.log(`origin session accepted: ${origin} ${JSON.stringify(payload)}`)
-      res.set('Access-Control-Allow-Origin', `${origin}`)
-      res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-      res.set('Access-Control-Allow-Credentials', 'true')
       res.status(200).send(JSON.stringify({"session":existingPayload}))
       return
     } catch (e) {
       console.error('Token verification failed:', e.message);
-      res.status(503).send('{"error":"Invalid session token."}')
+      res.status(200).send('{"error":"Invalid session token."}')
       return
     }
   }
@@ -433,7 +434,7 @@ const secretKey = 'shhhhh'
     const hash = text
     if (!/[0-9a-f]/.test(hash)) {
       console.error(`error getting block tip: ${text}`)
-      res.status(503).send('{"error":"The mempool service is unavailable: please inform the administrator."}')
+      res.status(200).send('{"error":"The mempool service is unavailable: please inform the administrator."}')
       return
     }
 
@@ -451,11 +452,11 @@ const secretKey = 'shhhhh'
       res.status(200).send(JSON.stringify({"session":newPayload}))
     }).catch(e => {
       console.error(`error getting block ${hash}: ${e}`)
-      res.status(503).send(`{"error":"Unable to get block: ${e} (block hash: ${hash})"}`)
+      res.status(200).send(`{"error":"Unable to get block: ${e} (block hash: ${hash})"}`)
     })
   }).catch(e => {
     console.error(`error getting blockchain tip: ${e}`)
-    res.status(503).send(`{"error":"Unable to get blockchain tip: ${e}"}`)
+    res.status(200).send(`{"error":"Unable to get blockchain tip: ${e}"}`)
   })
 })
 
