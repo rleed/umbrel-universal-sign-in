@@ -771,6 +771,9 @@ app.get(`${opts.admin}`, function (req, res) {
   // tablulate results
   let users = undefined
   const getResults = () => {
+    console.log(activity)
+    console.log(activity.data)
+    console.log(Object.getOwnPropertyNames(activity.data))
     let rows = Object.getOwnPropertyNames(activity.data).map(id => {
       const latest = activity.data.reduce((a,c) => {
         if (c.id == id && c.status == 'success') {
