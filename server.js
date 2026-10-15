@@ -772,7 +772,7 @@ console.log(`b`)
   // tablulate results
   let users = undefined
   const getResults = () => {
-    let rows = Object.getOwnPropertyNames(db.data).map(id => {
+    let rows = Object.getOwnPropertyNames(activity.data).map(id => {
       const latest = activity.data.reduce((a,c) => {
         if (c.id == id && c.status == 'success') {
           if (a.scheme == '' || a.time < c.time) {
@@ -784,13 +784,10 @@ console.log(`b`)
           return a
         }
       }, { scheme: '', time: '' })
-      const u = users?.filter(u => u.id == db.data[id])[0]
-      const username = u?.username||'('+db.data[id]+')'
-      const firstlast = u? [u.last_name, u.first_name].filter(n => n).join(', '): ''
-      const displayname = u? (u.nickname+' '+(firstlast? '('+firstlast+')': '')).trim(): ''
-      return `<td>${username}</td><td>${displayname}</td><td>${latest.scheme.replace(' Signed Message','')}</td><td>${latest.presented||id}</td>`
+      const u = users?.filter(u => u.id == activity.data[id])[0]
+      return `<td>${u.date}</td><td>-</td><td>${u.scheme.replace(' Signed Message','')}</td><td>${u.presented||id}</td>`
     })
-    let table = '<table class="guests"><tr><th>Username</th><th>Name</th><th>Auth</th><th>Identification</th></tr><tr>'+rows.join('</tr><tr>')+'</tr></table>'
+    let table = '<table class="guests"><tr><th>Date</th><th>Name</th><th>Auth</th><th>Identification</th></tr><tr>'+rows.join('</tr><tr>')+'</tr></table>'
 
     const absPath = path.join(__dirname, 'admin-page.html')
     let content = fs.readFileSync(absPath, 'utf8')
