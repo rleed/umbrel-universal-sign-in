@@ -787,9 +787,9 @@ app.get(`${opts.admin}`, function (req, res) {
       }, { scheme: '', time: '' })
       console.log(id, latest)
       const u = latest //users?.filter(u => u.id == activity.data[id])[0]
-      return `<td>${u.date}</td><td>-</td><td>${u.scheme.replace(' Signed Message','')}</td><td>${u.presented||id}</td>`
+      return `<td>${new Date(u.date).toLocaleString()}</td><td>${u.scheme}</td><td>${u.presented||id}</td>`
     })
-    let table = '<table class="guests"><tr><th>Date</th><th>Name</th><th>Auth</th><th>Identification</th></tr><tr>'+rows.join('</tr><tr>')+'</tr></table>'
+    let table = '<table class="guests"><tr><th>Date</th><th>Form of Id</th><th>Identification</th></tr><tr>'+rows.join('</tr><tr>')+'</tr></table>'
 
     const absPath = path.join(__dirname, 'admin-page.html')
     let content = fs.readFileSync(absPath, 'utf8')
