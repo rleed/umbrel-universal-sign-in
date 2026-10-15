@@ -784,7 +784,7 @@ console.log(`b`)
           return a
         }
       }, { scheme: '', time: '' })
-      const u = users?.filter(u => u.id == activity.data[id])[0]
+      const u = latest //users?.filter(u => u.id == activity.data[id])[0]
       return `<td>${u.date}</td><td>-</td><td>${u.scheme.replace(' Signed Message','')}</td><td>${u.presented||id}</td>`
     })
     let table = '<table class="guests"><tr><th>Date</th><th>Name</th><th>Auth</th><th>Identification</th></tr><tr>'+rows.join('</tr><tr>')+'</tr></table>'
