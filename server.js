@@ -764,7 +764,6 @@ console.log(`c`)
 
 // intended as admin panel behind umbrel login
 app.get(`${opts.admin}`, function (req, res) {
-console.log(`b`)
 
   const proto = req.protocol
   const domain = req.get('host')
@@ -784,6 +783,7 @@ console.log(`b`)
           return a
         }
       }, { scheme: '', time: '' })
+      console.log(id, latest)
       const u = latest //users?.filter(u => u.id == activity.data[id])[0]
       return `<td>${u.date}</td><td>-</td><td>${u.scheme.replace(' Signed Message','')}</td><td>${u.presented||id}</td>`
     })
