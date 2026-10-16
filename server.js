@@ -420,13 +420,18 @@ app.get(opts.session, function (req, res) {
   fetch(url).then(r => r.text()).then(text => {
     const hash = text
     if (!/[0-9a-f]/.test(hash)) {
-      console.error(`error getting chain tip: ${text}`)
+      console.error(`error getting chain tip: ${text}: ${url}`)
       res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
       return
     }
 
     const url = `${opts.mempool}/block/${hash}`
     fetch(url).then(r => r.json()).then(block => {
+      if (!block.height) {
+        console.error(`error getting tip block: ${hash}: ${url}`)
+        res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
+        return
+      }
 
       const loginId  = req.query.id
       const loginSig = req.query.sig
