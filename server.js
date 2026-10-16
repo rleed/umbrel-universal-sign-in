@@ -452,9 +452,9 @@ app.get(opts.session, function (req, res) {
           res.status(200).send('{"error":"Invalid session token."}')
           return
         }
-        console.log(`origin session accepted: ${origin} ${JSON.stringify(existingPayload)}`)
+        // console.log(`origin session accepted: ${origin} ${JSON.stringify(existingPayload)}`)
         res.status(200).send(JSON.stringify({
-          session: existingPayload,
+          payload: existingPayload,
           chaintip: block.height,
           minihash: hash.substr(hash.length-4),
         }))
@@ -485,7 +485,7 @@ app.get(opts.session, function (req, res) {
         }
         res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
         res.status(200).send(JSON.stringify({
-          session: newPayload,
+          payload: newPayload,
           chaintip: t,
           minihash: hash.substr(hash.length-4),
         }))
