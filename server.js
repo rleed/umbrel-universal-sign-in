@@ -70,7 +70,7 @@ const options = {
   mempool: {
     type: 'string',
     short: 'm',
-    default: 'https://mempool.guide/api',
+    default: process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api',
   },
   team: {
     type: 'string',
@@ -856,6 +856,7 @@ const port = +opts.port
 http.createServer(app_options, app).listen(port)
 console.log(`node ${process.version}`)
 console.log(`listening on port ${port}`)
+console.log(`mempool: ${opts.mempool}`)
 
 })
 })
