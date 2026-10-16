@@ -456,6 +456,7 @@ app.get(opts.session, function (req, res) {
         res.status(200).send(JSON.stringify({
           session: existingPayload,
           chaintip: block.height,
+          minihash: hash.substr(hash.length-4),
         }))
         return
       }
@@ -486,6 +487,7 @@ app.get(opts.session, function (req, res) {
         res.status(200).send(JSON.stringify({
           session: newPayload,
           chaintip: t,
+          minihash: hash.substr(hash.length-4),
         }))
       }
       const b = block.height
