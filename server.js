@@ -416,46 +416,50 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
 
-  const loginId  = req.query.id
-  const loginSig = req.query.sig
-  const logout   = req.query.logout
-  const usstoken = req.cookies.usstoken
-
-  if (!loginId && !loginSig && !logout && usstoken) {
-    let existingPayload
-    try {
-      existingPayload = jwt.verify(usstoken, secret)
-    } catch (e) {
-      console.error('Token verification failed:', e.message);
-      res.status(200).send('{"error":"Invalid session token."}')
-      return
-    }
-    if (!existingPayload.t) {
-      console.error('Token is missing t:', existingPayload);
-      res.status(200).send('{"error":"Invalid session token."}')
-      return
-    }
-    if (!existingPayload.id) {
-      console.error('Token is missing id:', existingPayload);
-      res.status(200).send('{"error":"Invalid session token."}')
-      return
-    }
-    console.log(`origin session accepted: ${origin} ${JSON.stringify(existingPayload)}`)
-    res.status(200).send(JSON.stringify({session:existingPayload}))
-    return
-  }
-
   const url = `${opts.mempool}/blocks/tip/hash`
   fetch(url).then(r => r.text()).then(text => {
     const hash = text
     if (!/[0-9a-f]/.test(hash)) {
-      console.error(`error getting block tip: ${text}`)
-      res.status(200).send('{"error":"The mempool service is unavailable: please inform the administrator."}')
+      console.error(`error getting chain tip: ${text}`)
+      res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
       return
     }
 
     const url = `${opts.mempool}/block/${hash}`
     fetch(url).then(r => r.json()).then(block => {
+
+      const loginId  = req.query.id
+      const loginSig = req.query.sig
+      const logout   = req.query.logout
+      const usstoken = req.cookies.usstoken
+
+      if (!loginId && !loginSig && !logout && usstoken) {
+        let existingPayload
+        try {
+          existingPayload = jwt.verify(usstoken, secret)
+        } catch (e) {
+          console.error('Token verification failed:', e.message);
+          res.status(200).send('{"error":"Invalid session token."}')
+          return
+        }
+        if (!existingPayload.t) {
+          console.error('Token is missing t:', existingPayload);
+          res.status(200).send('{"error":"Invalid session token."}')
+          return
+        }
+        if (!existingPayload.id) {
+          console.error('Token is missing id:', existingPayload);
+          res.status(200).send('{"error":"Invalid session token."}')
+          return
+        }
+        console.log(`origin session accepted: ${origin} ${JSON.stringify(existingPayload)}`)
+        res.status(200).send(JSON.stringify({
+          session: existingPayload,
+          chaintip: block.height,
+        }))
+        return
+      }
+
       const finisher = (t, id, sig, match) => {
         const newPayload = {
           t,
@@ -479,7 +483,10 @@ app.get(opts.session, function (req, res) {
           activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
         }
         res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
-        res.status(200).send(JSON.stringify({"session":newPayload}))
+        res.status(200).send(JSON.stringify({
+          session: newPayload,
+          chaintip: t,
+        }))
       }
       const b = block.height
       const y = Math.floor(b / 52500)
