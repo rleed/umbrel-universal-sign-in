@@ -515,7 +515,7 @@ app.get(opts.session, function (req, res) {
         verify(loginId, message, loginSig,
           template, domain, blocktime, minihash, timestamp
         ).then(match => {
-          console.log(`received ${match.scheme} by ${match.loginId}`)
+          console.log(`received ${match.scheme} by ${match.loginId} declaring: ${message}`)
           const date_now = Date.now()
           const prevTemplate = activity.data.reduce((a, c) => {
             let age = date_now - c.date
