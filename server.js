@@ -416,19 +416,19 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
 
-  const url = `${opts.mempool}/blocks/tip/hash`
-  fetch(url).then(r => r.text()).then(text => {
+  const url1 = `${opts.mempool}/blocks/tip/hash`
+  fetch(url1).then(r => r.text()).then(text => {
     const hash = text
     if (!/[0-9a-fA-F]{64}/.test(text)) {
-      console.error(`error getting chain tip: ${text}: ${url}`)
+      console.error(`error getting chain tip: ${text}: ${url1}`)
       res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
       return
     }
 
-    const url = `${opts.mempool}/block/${hash}`
-    fetch(url).then(r => r.json()).then(block => {
+    const url2 = `${opts.mempool}/block/${hash}`
+    fetch(url2).then(r => r.json()).then(block => {
       if (!block.height) {
-        console.error(`error getting tip block: ${hash}: ${url}`)
+        console.error(`error getting tip block: ${hash}: ${url2}`)
         res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
         return
       }
@@ -597,12 +597,12 @@ app.get(opts.session, function (req, res) {
         finisher(b, randomBytes(32).toString('hex'), undefined, undefined)
       }
     }).catch(e => {
-      console.error(`error getting block: ${e}: ${url}`)
-      res.status(200).send(`{"error":"Unable to get block: ${url}"}`)
+      console.error(`error getting block: ${e}: ${url2}`)
+      res.status(200).send(`{"error":"Unable to get block: ${url2}"}`)
     })
   }).catch(e => {
-    console.error(`error getting blockchain tip: ${e}: ${url}`)
-    res.status(200).send(`{"error":"Unable to get blockchain tip: ${url}"}`)
+    console.error(`error getting blockchain tip: ${e}: ${url1}`)
+    res.status(200).send(`{"error":"Unable to get blockchain tip: ${url1}"}`)
   })
 })
 
