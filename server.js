@@ -419,7 +419,7 @@ app.get(opts.session, function (req, res) {
   const url = `${opts.mempool}/blocks/tip/hash`
   fetch(url).then(r => r.text()).then(text => {
     const hash = text
-    if (!/[0-9a-f]/.test(hash)) {
+    if (!/[0-9a-fA-F]{64}/.test(text)) {
       console.error(`error getting chain tip: ${text}: ${url}`)
       res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
       return
