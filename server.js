@@ -431,10 +431,23 @@ app.get(opts.session, function (req, res) {
         return
       }
 
-      const loginId  = req.query.id
-      const loginSig = req.query.sig
-      const logout   = req.query.logout
+      const loginId     = req.query.id
+      const loginSig    = req.query.sig
+      const logout      = req.query.logout
+      const readSignins = req.query.read_signins
       const usstoken = req.cookies.usstoken
+
+      successHandler = payload => {
+        data = {
+          payload,
+          chaintip: block.height,
+          minihash: hash.substr(hash.length-4),
+        }
+        if (readSignins && payload.acl_read_signins) {
+          data.signins = activity.data
+        }
+        res.status(200).send(JSON.stringify(data))
+      }
 
       if (!loginId && !loginSig && !logout && usstoken) {
         let existingPayload
@@ -456,11 +469,7 @@ app.get(opts.session, function (req, res) {
           return
         }
         // console.log(`origin session accepted: ${origin} ${JSON.stringify(existingPayload)}`)
-        res.status(200).send(JSON.stringify({
-          payload: existingPayload,
-          chaintip: block.height,
-          minihash: hash.substr(hash.length-4),
-        }))
+        successHandler(existingPayload)
         return
       }
 
@@ -472,9 +481,9 @@ app.get(opts.session, function (req, res) {
         }
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
-          acl = JSON.parse(process.env.DNC_US_ACL_READ_LOGINS)
+          acl = JSON.parse(process.env.DNC_US_ACL_READ_SIGNINS)
           if (acl?.includes(id)) {
-            newPayload.acl_read_logins = true
+            newPayload.acl_read_signins = true
           }
           activity.data.push({
             date: Date.now(),
@@ -491,11 +500,7 @@ app.get(opts.session, function (req, res) {
         const options = { expiresIn: '30d' }
         const token = jwt.sign(newPayload, process.env.DNC_US_SECRET, options)
         res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
-        res.status(200).send(JSON.stringify({
-          payload: newPayload,
-          chaintip: t,
-          minihash: hash.substr(hash.length-4),
-        }))
+        successHandler(newPayload)
       }
       const b = block.height
       const y = Math.floor(b / 52500)
