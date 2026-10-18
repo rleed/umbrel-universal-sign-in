@@ -21,8 +21,6 @@ import('lowdb').then(lowdb => {
 import('@nostr/tools/pure').then(nostr_tools_pure => {
   const { getEventHash } = nostr_tools_pure
 
-const secret = process.env.DNC_US_SECRET
-
 const options = {
   port: {
     type: 'string',
@@ -441,7 +439,7 @@ app.get(opts.session, function (req, res) {
       if (!loginId && !loginSig && !logout && usstoken) {
         let existingPayload
         try {
-          existingPayload = jwt.verify(usstoken, secret)
+          existingPayload = jwt.verify(usstoken, process.env.DNC_US_SECRET)
         } catch (e) {
           console.error('Token verification failed:', e.message);
           res.status(200).send('{"error":"Invalid session token."}')
@@ -472,10 +470,12 @@ app.get(opts.session, function (req, res) {
           id,
           form_of_id: match?.scheme,
         }
-        const options = { expiresIn: '30d' }
-        const token = jwt.sign(newPayload, secret, options)
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
+          acl = JSON.parse(process.env.DNC_US_ACL_READ_LOGINS)
+          if (acl?.includes(id)) {
+            newPayload.acl_read_logins = true
+          }
           activity.data.push({
             date: Date.now(),
             status: 'success',
@@ -488,6 +488,8 @@ app.get(opts.session, function (req, res) {
           })
           activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
         }
+        const options = { expiresIn: '30d' }
+        const token = jwt.sign(newPayload, process.env.DNC_US_SECRET, options)
         res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
         res.status(200).send(JSON.stringify({
           payload: newPayload,
