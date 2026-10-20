@@ -434,7 +434,7 @@ app.get(opts.session, function (req, res) {
       const loginId     = req.query.id
       const loginSig    = req.query.sig
       const logout      = req.query.logout
-      const readSignins = req.query.read_signins
+      const readSignins = req.query.r_signins
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
@@ -443,7 +443,7 @@ app.get(opts.session, function (req, res) {
           chaintip: block.height,
           minihash: hash.substr(hash.length-4),
         }
-        if (readSignins && payload.acl_read_signins) {
+        if (readSignins && payload.acl_r_signins) {
           data.signins = activity.data
         }
         res.status(200).send(JSON.stringify(data))
@@ -481,9 +481,11 @@ app.get(opts.session, function (req, res) {
         }
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
-          acl = JSON.parse(process.env.DNC_US_ACL_READ_SIGNINS || '[]')
-          if (acl?.includes(id)) {
-            newPayload.acl_read_signins = true
+          if (JSON.parse(process.env.DNC_US_ACL_R_SIGNINS || '[]').includes(id)) {
+            newPayload.acl_r_signins = true
+          }
+          if (JSON.parse(process.env.DNC_US_ACL_RW_PERMISSIONS || '[]').includes(id)) {
+            newPayload.acl_rw_permissions = true
           }
           activity.data.push({
             date: Date.now(),
