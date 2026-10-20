@@ -481,7 +481,7 @@ app.get(opts.session, function (req, res) {
         }
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
-          acl = JSON.parse(process.env.DNC_US_ACL_READ_SIGNINS)
+          acl = JSON.parse(process.env.DNC_US_ACL_READ_SIGNINS || '[]')
           if (acl?.includes(id)) {
             newPayload.acl_read_signins = true
           }
