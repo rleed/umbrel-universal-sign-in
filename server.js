@@ -455,6 +455,7 @@ app.get(opts.session, function (req, res) {
           } })
         }
         if (prepReceive) {
+          data.pyg = 4.5
           data.addresses = ["bc1phnf6shhtwwfnpkglnugmuua64ag7rplaw6umeql8fw5kwvxmexmsqqrv7w"]
         }
         res.status(200).send(JSON.stringify(data))
