@@ -437,7 +437,7 @@ app.get(opts.session, function (req, res) {
       const loginId     = req.query.id
       const loginSig    = req.query.sig
       const logout      = req.query.logout
-      const readSignins = req.query.r_signins
+      const readSignins = req.query.signins
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
