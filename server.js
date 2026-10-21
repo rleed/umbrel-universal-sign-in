@@ -438,6 +438,7 @@ app.get(opts.session, function (req, res) {
       const loginSig    = req.query.sig
       const logout      = req.query.logout
       const readSignins = req.query.signins
+      const prepReceive = req.query.receive
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
@@ -452,6 +453,9 @@ app.get(opts.session, function (req, res) {
             scheme: r.scheme,
             id: r.id,
           } })
+        }
+        if (prepReceive) {
+          data.addresses = ["bc1phnf6shhtwwfnpkglnugmuua64ag7rplaw6umeql8fw5kwvxmexmsqqrv7w"]
         }
         res.status(200).send(JSON.stringify(data))
       }
