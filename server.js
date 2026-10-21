@@ -98,11 +98,14 @@ const { values: opts, positionals: args } = parseArgs({
 })
 
 const adapter1 = new JSONFile(`${opts.datapath}users.json`)
-const db = new Low(adapter1, {})
-db.read()
+const users_db = new Low(adapter1, {})
+users_db.read()
 const adapter2 = new JSONFile(`${opts.datapath}activity.json`)
-const activity = new Low(adapter2, [])
-activity.read()
+const activity_db = new Low(adapter2, [])
+activity_db.read()
+const adapter3 = new JSONFile(`${opts.datapath}permissions.json`)
+const permissions_db = new Low(adapter3, {})
+permissions_db.read()
 
 let team_id = undefined
 
@@ -188,7 +191,7 @@ function loginMattermost(res, id) {
       a = a.split('').map(c => String.fromCharCode(c.charCodeAt(0) + (/\d/.test(c)? 97-48: 10))).join('')
       const shortcode = a
 
-      let user_id = db.data[id]
+      let user_id = users_db.data[id]
       if (!user_id) {
 
         // create new user
@@ -200,8 +203,8 @@ function loginMattermost(res, id) {
         })}).then(r => r.json()).then(json => {
           if (json.email == `${shortcode}@satoshidnc.com` && json.id) {
             user_id = json.id
-            db.data[id] = user_id
-            db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+            users_db.data[id] = user_id
+            users_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
 
             // add user to team
             const addToTeam = () => {
@@ -443,8 +446,12 @@ app.get(opts.session, function (req, res) {
           chaintip: block.height,
           minihash: hash.substr(hash.length-4),
         }
-        if (readSignins && payload.acl_r_signins) {
-          data.signins = activity.data
+        if (readSignins && permissions_db.data["sign-ins"].includes(payload.id)) {
+          data.signins = activity_db.data.map(r => { return {
+            date: r.date,
+            scheme: r.scheme,
+            id: r.id,
+          } })
         }
         res.status(200).send(JSON.stringify(data))
       }
@@ -481,13 +488,12 @@ app.get(opts.session, function (req, res) {
         }
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
-          if (JSON.parse(process.env.DNC_US_ACL_R_SIGNINS || '[]').includes(id)) {
-            newPayload.acl_r_signins = true
-          }
-          if (JSON.parse(process.env.DNC_US_ACL_RW_PERMISSIONS || '[]').includes(id)) {
-            newPayload.acl_rw_permissions = true
-          }
-          activity.data.push({
+          Object.keys(permissions_db.data).forEach(key => {
+            if (permissions_db.data[key].includes(id)) {
+              newPayload[`acl_${key}`] = true
+            }
+          })
+          activity_db.data.push({
             date: Date.now(),
             status: 'success',
             presented: loginId,
@@ -497,7 +503,7 @@ app.get(opts.session, function (req, res) {
             template: opts.message,
             sig: match.sig,
           })
-          activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+          activity_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
         }
         const options = { expiresIn: '30d' }
         const token = jwt.sign(newPayload, process.env.DNC_US_SECRET, options)
@@ -531,7 +537,7 @@ app.get(opts.session, function (req, res) {
         ).then(match => {
           console.log(`received ${match.scheme} by ${match.loginId} declaring: ${message}`)
           const date_now = Date.now()
-          const prevTemplate = activity.data.reduce((a, c) => {
+          const prevTemplate = activity_db.data.reduce((a, c) => {
             let age = date_now - c.date
             if (['success', 'new-terms'].includes(c.status) && !isNaN(c.date) && c.template && (!a.age || age < a.age)) {
               return { age, template: c.template }
@@ -548,7 +554,7 @@ app.get(opts.session, function (req, res) {
             console.log(`old: ${prevTemplateFilled}`)
             console.log(`new: ${message}`)
             res.redirect(`${opts.route}?signinfo=The+sign-in+message+has+changed+since+you+last+signed+in.+Please+re-read+it+carefully+before+proceeding.`)
-            activity.data.push({
+            activity_db.data.push({
               date: Date.now(),
               status: 'new-terms',
               presented: loginId,
@@ -558,7 +564,7 @@ app.get(opts.session, function (req, res) {
               template: template,
               sig: match.sig
             })
-            activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+            activity_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
           } else {
             let screenUser = new Promise((resolve, reject) => {
               resolve()
@@ -581,7 +587,7 @@ app.get(opts.session, function (req, res) {
               finisher(b, loginId, loginSig, match)
             }).catch(e => {
               console.log(`blocked ${match.loginId}: ${e}`)
-              activity.data.push({
+              activity_db.data.push({
                 date: Date.now(),
                 status: 'blocked',
                 presented: loginId,
@@ -591,7 +597,7 @@ app.get(opts.session, function (req, res) {
                 template: template,
                 sig: match.sig,
               })
-              activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+              activity_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
               console.error(`blocked user: ${e}`)
               res.status(200).send(`{"error":"Access denied: ${e}"}`)
               return
@@ -692,7 +698,7 @@ console.log(`c`)
           ).then(match => {
             console.log(`received ${match.scheme} by ${match.loginId}`)
             const date_now = Date.now()
-            const prevTemplate = activity.data.reduce((a, c) => {
+            const prevTemplate = activity_db.data.reduce((a, c) => {
               let age = date_now - c.date
               if (['success', 'new-terms'].includes(c.status) && !isNaN(c.date) && c.template && (!a.age || age < a.age)) {
                 return { age, template: c.template }
@@ -709,7 +715,7 @@ console.log(`c`)
               console.log(`old: ${prevTemplateFilled}`)
               console.log(`new: ${message}`)
               res.redirect(`${opts.route}?signinfo=The+sign-in+message+has+changed+since+you+last+signed+in.+Please+re-read+it+carefully+before+proceeding.`)
-              activity.data.push({
+              activity_db.data.push({
                 date: Date.now(),
                 status: 'new-terms',
                 presented: loginId,
@@ -719,7 +725,7 @@ console.log(`c`)
                 template: template,
                 sig: match.sig
               })
-              activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+              activity_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
             } else {
             let screenUser = new Promise((resolve, reject) => {
               resolve()
@@ -742,7 +748,7 @@ console.log(`c`)
               loginMattermost(res, match.loginId).then(detail => {
                 console.log(`successful login by ${match.loginId}`)
                 res.redirect('/')
-                activity.data.push({
+                activity_db.data.push({
                   date: Date.now(),
                   status: 'success',
                   presented: loginId,
@@ -753,14 +759,14 @@ console.log(`c`)
                   sig: match.sig,
                   user: detail.id
                 })
-                activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+                activity_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
               }).catch(e => {
                 console.log(`failed to login ${match.loginId}: ${e}`)
                 res.redirect(`${opts.route}?signerror=${encodeURIComponent('Unexpected error: please report date/time of incident to admin.')}`)
               })
             }).catch(e => {
               console.log(`blocked ${match.loginId}: ${e}`)
-              activity.data.push({
+              activity_db.data.push({
                 date: Date.now(),
                 status: 'blocked',
                 presented: loginId,
@@ -770,7 +776,7 @@ console.log(`c`)
                 template: template,
                 sig: match.sig,
               })
-              activity.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+              activity_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
               res.redirect(`${opts.route}?signerror=${encodeURIComponent(e)}`)
             })
             }
@@ -794,10 +800,10 @@ app.get(`${opts.admin}`, function (req, res) {
   // tablulate results
   let users = undefined
   const getResults = () => {
-    console.log(activity.data.map(e => e.id))
-    console.log([...new Set(activity.data.map(e => e.id))])
-    let rows = [...new Set(activity.data.map(e => e.id))].map(id => {
-      const latest = activity.data.reduce((a,c) => {
+    console.log(activity_db.data.map(e => e.id))
+    console.log([...new Set(activity_db.data.map(e => e.id))])
+    let rows = [...new Set(activity_db.data.map(e => e.id))].map(id => {
+      const latest = activity_db.data.reduce((a,c) => {
         if (c.id == id && c.status == 'success') {
           if (a.scheme == '' || a.time < c.time) {
             return c
@@ -809,7 +815,7 @@ app.get(`${opts.admin}`, function (req, res) {
         }
       }, { scheme: '', time: '' })
       console.log(id, latest)
-      const u = latest //users?.filter(u => u.id == activity.data[id])[0]
+      const u = latest //users?.filter(u => u.id == activity_db.data[id])[0]
       return `<td>${new Date(u.date).toLocaleString()}</td><td>${u.scheme}</td><td>${u.presented||id}</td>`
     })
     let table = '<table class="guests"><tr><th>Date</th><th>Form of Id</th><th>Identification</th></tr><tr>'+rows.join('</tr><tr>')+'</tr></table>'
