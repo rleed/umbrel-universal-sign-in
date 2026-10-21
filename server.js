@@ -446,7 +446,7 @@ app.get(opts.session, function (req, res) {
           chaintip: block.height,
           minihash: hash.substr(hash.length-4),
         }
-        if (readSignins && permissions_db.data["sign-ins"].includes(payload.id)) {
+        if (readSignins && permissions_db.data["signins"].includes(payload.id)) {
           data.signins = activity_db.data.map(r => { return {
             date: r.date,
             scheme: r.scheme,
