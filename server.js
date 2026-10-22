@@ -443,7 +443,7 @@ app.get(opts.session, function (req, res) {
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
-        data = {
+        const data = {
           payload,
           chaintip: block.height,
           minihash: hash.substr(hash.length-4),
