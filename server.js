@@ -440,6 +440,8 @@ app.get(opts.session, function (req, res) {
       const readSignins  = req.query.signins
       const prepReceive  = req.query.receive
       const checkAddress = req.query.addr
+      const checkAmount  = req.query.amt
+      const checkHeight  = req.query.h
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
@@ -464,10 +466,14 @@ app.get(opts.session, function (req, res) {
         }
         console.log('checkAddress', checkAddress)
         if (checkAddress) {
-          fetch(`${opts.mempool}/address/${checkAddress}`).then(r => r.json()).then(json => {
+          fetch(`${opts.mempool}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
             console.log(json)
             data.payment_status = {}
-            data.payment_status[checkAddress] = json
+            data.payment_status[checkAddress] = json.filter(utxo => {
+              return utxo.value == checkAmount
+                && (utxo.status.confirmed == false
+                 || utxo.status.block_height > checkHeight)
+            })
             finish()
           })
         } else {
