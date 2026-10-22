@@ -433,11 +433,16 @@ app.get(opts.session, function (req, res) {
       const loginId      = req.query.id
       const loginSig     = req.query.sig
       const logout       = req.query.logout
+
+      /* requires signins permission */
       const readSignins  = req.query.signins
+
+      /* requires pos permission */
       const prepReceive  = req.query.receive
       const checkAddress = req.query.addr
       const checkAmount  = req.query.amt
       const checkHeight  = req.query.h
+
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
@@ -453,14 +458,17 @@ app.get(opts.session, function (req, res) {
             id: r.id,
           } })
         }
-        if (prepReceive) {
+        if (prepReceive && permissions_db.data["pos"].includes(payload.id)) {
           data.pyg = 4.7
-          data.addresses = [process.env.DNC_US_FALLBACK_RECV_ADDR]
+          data.addresses = []
+          if (process.env.DNC_US_FALLBACK_RECV_ADDR) {
+            data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
+          }
         }
         const finish = () => {
           res.status(200).send(JSON.stringify(data))
         }
-        if (checkAddress) {
+        if (checkAddress && permissions_db.data["pos"].includes(payload.id)) {
           fetch(`${opts.mempool}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
             const utxos = json.filter(utxo => {
               return utxo.value == checkAmount
