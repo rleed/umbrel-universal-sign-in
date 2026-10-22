@@ -458,21 +458,20 @@ app.get(opts.session, function (req, res) {
           } })
         }
         if (prepReceive) {
-          data.pyg = 4.5
-          data.addresses = ["bc1phnf6shhtwwfnpkglnugmuua64ag7rplaw6umeql8fw5kwvxmexmsqqrv7w"]
+          data.pyg = 4.7
+          data.addresses = [process.env.DNC_US_FALLBACK_RECV_ADDR]
         }
         const finish = () => {
           res.status(200).send(JSON.stringify(data))
         }
-        console.log('checkAddress', checkAddress)
         if (checkAddress) {
           fetch(`${opts.mempool}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
-            console.log(json)
             const utxos = json.filter(utxo => {
               return utxo.value == checkAmount
                 && (utxo.status.confirmed == false
                  || utxo.status.block_height > checkHeight)
             })
+            if (utxos.length > 0) console.log(utxos)
             data.paid = (utxos.length > 0)
             finish()
           })
