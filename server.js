@@ -413,6 +413,8 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
 
+  import('@noble/hashes/sha2.js').then(hashes => {
+
   const url1 = `${opts.mempool}/blocks/tip/hash`
   fetch(url1).then(r => r.text()).then(text => {
     const hash = text
@@ -466,7 +468,9 @@ app.get(opts.session, function (req, res) {
           }
         }
         const finish = () => {
-          data.payload.id = hash(data.payload.id)
+          const bytes = Uint8Array.from(Buffer.from(data.payload.id, 'hex'))
+          const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
+          data.payload.id = hash
           res.status(200).send(JSON.stringify(data))
         }
         if (checkAddress && permissions_db.data['pos']?.includes(payload.id)) {
@@ -552,7 +556,12 @@ app.get(opts.session, function (req, res) {
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
       const minihash = hash.slice(-4)
       const randomid = randomBytes(32).toString('hex')
-      let idhash = hash(randomid)
+      let idhash
+      {
+        const bytes = Uint8Array.from(Buffer.from(randomid, 'hex'))
+        const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
+        idhash = hash
+      }
       const template = opts.message
       const message = template
         .replaceAll('{sessionhash}', idhash)
@@ -564,7 +573,11 @@ app.get(opts.session, function (req, res) {
       if (logout) {
         finisher(b, randomid, undefined, undefined)
       } else if (loginId || loginSig) {
-        idhash = hash(loginId)
+        {
+          const bytes = Uint8Array.from(Buffer.from(loginId, 'hex'))
+          const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
+          idhash = hash
+        }
         verify(loginId, message, loginSig,
           template, idhash, domain, blocktime, minihash, timestamp
         ).then(match => {
@@ -652,6 +665,11 @@ app.get(opts.session, function (req, res) {
   }).catch(e => {
     console.error(`error getting blockchain tip: ${e}: ${url1}`)
     res.status(200).send(`{"error":"Unable to get blockchain tip: ${url1}"}`)
+  })
+
+  }).catch(e => {
+    console.error(`error importing SHA-256 hashing library: ${e}`)
+    res.status(200).send(`{"error":"unexpected error: try again later"}`)
   })
 })
 
