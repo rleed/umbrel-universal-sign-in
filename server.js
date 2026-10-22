@@ -46,10 +46,6 @@ const options = {
     type: 'string',
     short: 't',
   },
-  password: {
-    type: 'string',
-    short: 'P',
-  },
   route: {
     type: 'string',
     short: 'r',
@@ -160,7 +156,7 @@ function loginMattermost(res, id) {
       //console.log(`getting session token for ${username}`)
       fetch(`${opts.mattermost}/api/v4/users/login`, { ...post_options, body: JSON.stringify({
         login_id: username,
-        password: opts.password
+        password: process.env.HARD_PASS,
       })}).then(r => {
         const setCookieHeaders = r.headers.getSetCookie()
         const cookies = {};
@@ -198,7 +194,7 @@ function loginMattermost(res, id) {
         console.log(`creating new user account ${shortcode}`)
         fetch(`${opts.mattermost}/api/v4/users`, { ...post_options, body: JSON.stringify({
           username: shortcode,
-          password: opts.password,
+          password: process.env.HARD_PASS,
           email: `${shortcode}@satoshidnc.com`
         })}).then(r => r.json()).then(json => {
           if (json.email == `${shortcode}@satoshidnc.com` && json.id) {
