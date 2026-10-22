@@ -82,9 +82,9 @@ subject to the terms and policies.`
     type: 'string',
     short: 'T',
     default: `\
-I, the undersigned, pledge to the members of the {domain} community never \
+I ({sessionhash}), the undersigned, pledge to the members of the {domain} community never \
 to report nor reveal their personal data including transaction data without \
-a search warrant, and I agree to the terms and policies on file. Date: {blocktime} ({minihash})`
+a search warrant, and I agree to the terms and policies on file. Date: {blocktime} ({blockhash})`
   },
 }
 
@@ -278,7 +278,7 @@ function verifyNostorEvent(npub, messageString, sig, ...aux) {
 
       const event = {
         pubkey: `${pubkey}`,
-        created_at: +aux[4],
+        created_at: +aux[5],
         kind: 1,
         tags: [
         ],
@@ -451,14 +451,14 @@ app.get(opts.session, function (req, res) {
           chaintip: block.height,
           minihash: hash.substr(hash.length-4),
         }
-        if (readSignins && permissions_db.data["signins"].includes(payload.id)) {
+        if (readSignins && permissions_db.data['signins']?.includes(payload.id)) {
           data.signins = activity_db.data.map(r => { return {
             date: r.date,
             scheme: r.scheme,
             id: r.id,
           } })
         }
-        if (prepReceive && permissions_db.data["pos"].includes(payload.id)) {
+        if (prepReceive && permissions_db.data['pos']?.includes(payload.id)) {
           data.pyg = 4.7
           data.addresses = []
           if (process.env.DNC_US_FALLBACK_RECV_ADDR) {
@@ -466,9 +466,10 @@ app.get(opts.session, function (req, res) {
           }
         }
         const finish = () => {
+          data.payload.id = hash(data.payload.id)
           res.status(200).send(JSON.stringify(data))
         }
-        if (checkAddress && permissions_db.data["pos"].includes(payload.id)) {
+        if (checkAddress && permissions_db.data['pos']?.includes(payload.id)) {
           fetch(`${opts.mempool}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
             const utxos = json.filter(utxo => {
               return utxo.value == checkAmount
@@ -550,18 +551,22 @@ app.get(opts.session, function (req, res) {
       const tm = thb * 10
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
       const minihash = hash.slice(-4)
+      const randomid = randomBytes(32).toString('hex')
+      let idhash = hash(randomid)
       const template = opts.message
       const message = template
+        .replaceAll('{sessionhash}', idhash)
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
-        .replaceAll('{minihash}', minihash)
+        .replaceAll('{blockhash}', minihash)
       const timestamp = block.timestamp
       let id, sig
       if (logout) {
-        finisher(b, randomBytes(32).toString('hex'), undefined, undefined)
+        finisher(b, randomid, undefined, undefined)
       } else if (loginId || loginSig) {
+        idhash = hash(loginId)
         verify(loginId, message, loginSig,
-          template, domain, blocktime, minihash, timestamp
+          template, idhash, domain, blocktime, minihash, timestamp
         ).then(match => {
           console.log(`received ${match.scheme} by ${match.loginId} declaring: ${message}`)
           const date_now = Date.now()
@@ -574,6 +579,7 @@ app.get(opts.session, function (req, res) {
             }
           }, { age: 0, template: '' }).template
           const prevTemplateFilled = prevTemplate
+            .replaceAll('{sessionhash}', idhash)
             .replaceAll('{domain}', domain)
             .replaceAll('{blocktime}', blocktime)
             .replaceAll('{minihash}', minihash)
@@ -637,7 +643,7 @@ app.get(opts.session, function (req, res) {
           res.status(200).send(`{"error":"Improperly signed: try again."}`)
         })
       } else {
-        finisher(b, randomBytes(32).toString('hex'), undefined, undefined)
+        finisher(b, randomid, undefined, undefined)
       }
     }).catch(e => {
       console.error(`error getting block: ${e}: ${url2}`)
@@ -722,7 +728,7 @@ console.log(`c`)
           res.redirect(`${opts.route}?signerror=Login+message+expired:+try+again.`)
         } else {
           verify(loginId, loginMessage, loginSig,
-            template, domain, blocktime, minihash, timestamp
+            template, undefined, domain, blocktime, minihash, timestamp
           ).then(match => {
             console.log(`received ${match.scheme} by ${match.loginId}`)
             const date_now = Date.now()
