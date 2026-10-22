@@ -434,11 +434,12 @@ app.get(opts.session, function (req, res) {
         return
       }
 
-      const loginId     = req.query.id
-      const loginSig    = req.query.sig
-      const logout      = req.query.logout
-      const readSignins = req.query.signins
-      const prepReceive = req.query.receive
+      const loginId      = req.query.id
+      const loginSig     = req.query.sig
+      const logout       = req.query.logout
+      const readSignins  = req.query.signins
+      const prepReceive  = req.query.receive
+      const checkAddress = req.query.addr
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
@@ -458,7 +459,18 @@ app.get(opts.session, function (req, res) {
           data.pyg = 4.5
           data.addresses = ["bc1phnf6shhtwwfnpkglnugmuua64ag7rplaw6umeql8fw5kwvxmexmsqqrv7w"]
         }
-        res.status(200).send(JSON.stringify(data))
+        const finish = () => {
+          res.status(200).send(JSON.stringify(data))
+        }
+        if (checkAddress) {
+          fetch(`${opts.mempool}/address/${checkAddress}`).then(r => {
+            console.log(r)
+            data.payment_status = { `${checkAddress}`: {} }
+            finish()
+          })
+        } else {
+          finish()
+        }
       }
 
       if (!loginId && !loginSig && !logout && usstoken) {
