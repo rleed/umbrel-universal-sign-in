@@ -465,7 +465,8 @@ app.get(opts.session, function (req, res) {
         if (checkAddress) {
           fetch(`${opts.mempool}/address/${checkAddress}`).then(r => {
             console.log(r)
-            data.payment_status = { `${checkAddress}`: {} }
+            data.payment_status = {}
+            data.payment_status[checkAddress] = {}
             finish()
           })
         } else {
