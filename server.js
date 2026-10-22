@@ -462,6 +462,7 @@ app.get(opts.session, function (req, res) {
         const finish = () => {
           res.status(200).send(JSON.stringify(data))
         }
+        console.log('checkAddress', checkAddress)
         if (checkAddress) {
           fetch(`${opts.mempool}/address/${checkAddress}`).then(r => {
             console.log(r)
