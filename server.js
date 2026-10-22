@@ -468,12 +468,12 @@ app.get(opts.session, function (req, res) {
         if (checkAddress) {
           fetch(`${opts.mempool}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
             console.log(json)
-            data.payment_status = {}
-            data.payment_status[checkAddress] = json.filter(utxo => {
+            const utxos = json.filter(utxo => {
               return utxo.value == checkAmount
                 && (utxo.status.confirmed == false
                  || utxo.status.block_height > checkHeight)
             })
+            data.paid = (utxos.length > 0)
             finish()
           })
         } else {
