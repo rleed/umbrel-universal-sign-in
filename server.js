@@ -455,12 +455,10 @@ app.get(opts.session, function (req, res) {
           }
         }
         const finish = () => {
-          const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
-          const userId = Buffer.from(data.payload.id, 'hex')
-          const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
-          //const bytes = Uint8Array.from(Buffer.from(data.payload.id, 'hex'))
-          //const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
-          data.payload.id = obfsId
+          //const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+          //const userId = Buffer.from(data.payload.id, 'hex')
+          //const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+          //data.payload.id = obfsId
           res.status(200).send(JSON.stringify(data))
         }
         if (checkAddress && permissions_db.data['pos']?.includes(payload.id)) {
@@ -546,18 +544,16 @@ app.get(opts.session, function (req, res) {
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
       const blockhash = hash.slice(-4)
       const randomid = randomBytes(32).toString('hex')
-      let idhash
-      {
-        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
-        const userId = Buffer.from(randomid, 'hex')
-        const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
-//        const bytes = Uint8Array.from(Buffer.from(randomid, 'hex'))
-//        const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
-        idhash = obfsId
-      }
+      let idhash = randomid
+//      {
+//        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+//        const userId = Buffer.from(randomid, 'hex')
+//        const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+//        idhash = obfsId
+//      }
       const template = opts.message
       const message = template
-        .replaceAll('{idhash}', idhash)
+        .replaceAll('{idhash}', idhash.slice(-4))
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
         .replaceAll('{blockhash}', blockhash)
@@ -566,14 +562,13 @@ app.get(opts.session, function (req, res) {
       if (logout) {
         finisher(b, randomid, undefined, undefined)
       } else if (loginId || loginSig) {
-        {
-          const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
-          const userId = Buffer.from(loginId, 'hex')
-          const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
-//          const bytes = Uint8Array.from(Buffer.from(loginId, 'hex'))
-//          const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
-          idhash = obfsId
-        }
+        idhash = loginId
+//        {
+//          const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+//          const userId = Buffer.from(loginId, 'hex')
+//          const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+//          idhash = obfsId
+//        }
         verify(loginId, message, loginSig,
           template, idhash, domain, blocktime, blockhash, timestamp
         ).then(match => {
@@ -588,7 +583,7 @@ app.get(opts.session, function (req, res) {
             }
           }, { age: 0, template: '' }).template
           const prevTemplateFilled = prevTemplate
-            .replaceAll('{idhash}', idhash)
+            .replaceAll('{idhash}', idhash.slice(-4))
             .replaceAll('{domain}', domain)
             .replaceAll('{blocktime}', blocktime)
             .replaceAll('{blockhash}', blockhash)
@@ -701,18 +696,16 @@ console.log(`c`)
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
       const blockhash = hash.slice(-4)
       const randomid = randomBytes(32).toString('hex')
-      let idhash
-      {
-        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
-        const userId = Buffer.from(randomid, 'hex')
-        const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
-//        const bytes = Uint8Array.from(Buffer.from(randomid, 'hex'))
-//        const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
-        idhash = obfsId
-      }
+      let idhash = randomid
+//      {
+//        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+//        const userId = Buffer.from(randomid, 'hex')
+//        const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+//        idhash = obfsId
+//      }
       const template = opts.message
       const message = template
-        .replaceAll('{idhash}', idhash)
+        .replaceAll('{idhash}', idhash.slice(-4))
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
         .replaceAll('{blockhash}', blockhash)
@@ -762,7 +755,7 @@ console.log(`c`)
               }
             }, { age: 0, template: '' }).template
             const prevTemplateFilled = prevTemplate
-              .replaceAll('{idhash}', idhash)
+              .replaceAll('{idhash}', idhash.slice(-4))
               .replaceAll('{domain}', domain)
               .replaceAll('{blocktime}', blocktime)
               .replaceAll('{blockhash}', blockhash)
