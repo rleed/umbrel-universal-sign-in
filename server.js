@@ -20,6 +20,9 @@ import('lowdb').then(lowdb => {
   Low = lowdb.Low
 import('@nostr/tools/pure').then(nostr_tools_pure => {
   const { getEventHash } = nostr_tools_pure
+import('@noble/secp256k1').then(secp => {
+import('@noble/hashes/sha2.js').then(hashes => {
+  secp.hashes.sha256 = hashes.sha256
 
 const options = {
   port: {
@@ -75,16 +78,8 @@ const options = {
     type: 'string',
     short: 'M',
     default: `\
-I, the undersigned, hereby access {domain} as of {blocktime} ({minihash}) \
+I ({idhash}), the undersigned, hereby access {domain} as of {blocktime} ({blockhash}) \
 subject to the terms and policies.`
-  },
-  terms: {
-    type: 'string',
-    short: 'T',
-    default: `\
-I ({sessionhash}), the undersigned, pledge to the members of the {domain} community never \
-to report nor reveal their personal data including transaction data without \
-a search warrant, and I agree to the terms and policies on file. Date: {blocktime} ({blockhash})`
   },
 }
 
@@ -176,84 +171,82 @@ function loginMattermost(res, id) {
     })
   }
   return new Promise((resolve, reject) => {
-    import('@noble/hashes/sha2.js').then(hashes => {
-      const hash = Buffer.from(hashes.sha256(new TextEncoder().encode(id)))
-      const l = hash.length/4
-      let a = ''
-      for (i=0; i<l; i++) {
-        let b = hash[i] ^ hash[i+l] ^ hash[i+l*2] ^ hash[i+l*3]
-        a += ('0'+b.toString(16)).slice(-2)
-      }
-      a = a.split('').map(c => String.fromCharCode(c.charCodeAt(0) + (/\d/.test(c)? 97-48: 10))).join('')
-      const shortcode = a
+    const hash = Buffer.from(hashes.sha256(new TextEncoder().encode(id)))
+    const l = hash.length/4
+    let a = ''
+    for (i=0; i<l; i++) {
+      let b = hash[i] ^ hash[i+l] ^ hash[i+l*2] ^ hash[i+l*3]
+      a += ('0'+b.toString(16)).slice(-2)
+    }
+    a = a.split('').map(c => String.fromCharCode(c.charCodeAt(0) + (/\d/.test(c)? 97-48: 10))).join('')
+    const shortcode = a
 
-      let user_id = users_db.data[id]
-      if (!user_id) {
+    let user_id = users_db.data[id]
+    if (!user_id) {
 
-        // create new user
-        console.log(`creating new user account ${shortcode}`)
-        fetch(`${opts.mattermost}/api/v4/users`, { ...post_options, body: JSON.stringify({
-          username: shortcode,
-          password: process.env.HARD_PASS,
-          email: `${shortcode}@satoshidnc.com`
-        })}).then(r => r.json()).then(json => {
-          if (json.email == `${shortcode}@satoshidnc.com` && json.id) {
-            user_id = json.id
-            users_db.data[id] = user_id
-            users_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
+      // create new user
+      console.log(`creating new user account ${shortcode}`)
+      fetch(`${opts.mattermost}/api/v4/users`, { ...post_options, body: JSON.stringify({
+        username: shortcode,
+        password: process.env.HARD_PASS,
+        email: `${shortcode}@satoshidnc.com`
+      })}).then(r => r.json()).then(json => {
+        if (json.email == `${shortcode}@satoshidnc.com` && json.id) {
+          user_id = json.id
+          users_db.data[id] = user_id
+          users_db.write().then(()=>{}).catch(e => console.log(`error writing db: ${e}`))
 
-            // add user to team
-            const addToTeam = () => {
-              fetch(`${opts.mattermost}/api/v4/teams/${team_id}/members`, { ...post_options, body: JSON.stringify({
-                team_id: team_id,
-                user_id: user_id
-              })}).then(r => r.json()).then(json => {
-                if (json.team_id == team_id && json.user_id == user_id) {
-                  // log in
-                  injectSession(shortcode).then(() => {
-                    resolve({
-                      id: user_id
-                    })
+          // add user to team
+          const addToTeam = () => {
+            fetch(`${opts.mattermost}/api/v4/teams/${team_id}/members`, { ...post_options, body: JSON.stringify({
+              team_id: team_id,
+              user_id: user_id
+            })}).then(r => r.json()).then(json => {
+              if (json.team_id == team_id && json.user_id == user_id) {
+                // log in
+                injectSession(shortcode).then(() => {
+                  resolve({
+                    id: user_id
                   })
-                } else {
-                  reject(`error adding user to team: ${JSON.stringify(json)}`)
-                }
-              })
-            }
-            // find team
-            if (!team_id) {
-              fetch(`${opts.mattermost}/api/v4/teams/name/${opts.team}`, get_options).then(r => r.json()).then(json => {
-                if (json.name == opts.team && json.id) {
-                  team_id = json.id
-                  addToTeam()
-                } else {
-                  reject(`error finding team: ${JSON.stringify(json)}`)
-                }
-              })
-            } else {
-              addToTeam()
-            }
-          } else {
-            reject(`error creating account ${shortcode}: ${JSON.stringify(json)}`)
+                })
+              } else {
+                reject(`error adding user to team: ${JSON.stringify(json)}`)
+              }
+            })
           }
-        })
-
-      } else {
-        fetch(`${opts.mattermost}/api/v4/users/${user_id}`, get_options).then(r => r.json()).then(json => {
-          if (json.id == user_id) {
-            injectSession(json.username).then(() => {
-              resolve({
-                id: json.id
-              })
+          // find team
+          if (!team_id) {
+            fetch(`${opts.mattermost}/api/v4/teams/name/${opts.team}`, get_options).then(r => r.json()).then(json => {
+              if (json.name == opts.team && json.id) {
+                team_id = json.id
+                addToTeam()
+              } else {
+                reject(`error finding team: ${JSON.stringify(json)}`)
+              }
             })
           } else {
-            console.log(`error querying mattermost user ${user_id}`)
-            reject(JSON.stringify(json))
+            addToTeam()
           }
-        }).catch(e => { reject(e) })
+        } else {
+          reject(`error creating account ${shortcode}: ${JSON.stringify(json)}`)
+        }
+      })
 
-      }
-    })
+    } else {
+      fetch(`${opts.mattermost}/api/v4/users/${user_id}`, get_options).then(r => r.json()).then(json => {
+        if (json.id == user_id) {
+          injectSession(json.username).then(() => {
+            resolve({
+              id: json.id
+            })
+          })
+        } else {
+          console.log(`error querying mattermost user ${user_id}`)
+          reject(JSON.stringify(json))
+        }
+      }).catch(e => { reject(e) })
+
+    }
   })
 }
 
@@ -303,20 +296,16 @@ function verifyNostorEvent(npub, messageString, sig, ...aux) {
 
 function verifyLightningMessage(pubkeyHex, messageString, zbase32Signature) {
   return new Promise((resolve, reject) => {
-    import('@noble/secp256k1').then(secp => {
-    import('@noble/hashes/sha2.js').then(hashes => {
-      secp.hashes.sha256 = hashes.sha256
-      try {
-        valid = secp.verify(
-          z32.decode(zbase32Signature).slice(1),
-          hashes.sha256(new TextEncoder().encode('Lightning Signed Message:'+messageString)),
-          Buffer.from(pubkeyHex, 'hex'))
-        resolve(valid)
-      } catch (e) {
-        //console.error(e)
-        resolve(false)
-      }
-    })})
+    try {
+      valid = secp.verify(
+        z32.decode(zbase32Signature).slice(1),
+        hashes.sha256(new TextEncoder().encode('Lightning Signed Message:'+messageString)),
+        Buffer.from(pubkeyHex, 'hex'))
+      resolve(valid)
+    } catch (e) {
+      //console.error(e)
+      resolve(false)
+    }
   })
 }
 
@@ -413,8 +402,6 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
 
-  import('@noble/hashes/sha2.js').then(hashes => {
-
   const url1 = `${opts.mempool}/blocks/tip/hash`
   fetch(url1).then(r => r.text()).then(text => {
     const hash = text
@@ -468,9 +455,12 @@ app.get(opts.session, function (req, res) {
           }
         }
         const finish = () => {
-          const bytes = Uint8Array.from(Buffer.from(data.payload.id, 'hex'))
-          const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
-          data.payload.id = hash
+          const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+          const userId = Buffer.from(data.payload.id, 'hex')
+          const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+          //const bytes = Uint8Array.from(Buffer.from(data.payload.id, 'hex'))
+          //const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
+          data.payload.id = obfsId
           res.status(200).send(JSON.stringify(data))
         }
         if (checkAddress && permissions_db.data['pos']?.includes(payload.id)) {
@@ -554,32 +544,38 @@ app.get(opts.session, function (req, res) {
       const thb = ymdb % 6
       const tm = thb * 10
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
-      const minihash = hash.slice(-4)
+      const blockhash = hash.slice(-4)
       const randomid = randomBytes(32).toString('hex')
       let idhash
       {
-        const bytes = Uint8Array.from(Buffer.from(randomid, 'hex'))
-        const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
-        idhash = hash
+        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+        const userId = Buffer.from(randomid, 'hex')
+        const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+//        const bytes = Uint8Array.from(Buffer.from(randomid, 'hex'))
+//        const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
+        idhash = obfsId
       }
       const template = opts.message
       const message = template
-        .replaceAll('{sessionhash}', idhash)
+        .replaceAll('{idhash}', idhash)
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
-        .replaceAll('{blockhash}', minihash)
+        .replaceAll('{blockhash}', blockhash)
       const timestamp = block.timestamp
       let id, sig
       if (logout) {
         finisher(b, randomid, undefined, undefined)
       } else if (loginId || loginSig) {
         {
-          const bytes = Uint8Array.from(Buffer.from(loginId, 'hex'))
-          const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
-          idhash = hash
+          const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+          const userId = Buffer.from(loginId, 'hex')
+          const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+//          const bytes = Uint8Array.from(Buffer.from(loginId, 'hex'))
+//          const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
+          idhash = obfsId
         }
         verify(loginId, message, loginSig,
-          template, idhash, domain, blocktime, minihash, timestamp
+          template, idhash, domain, blocktime, blockhash, timestamp
         ).then(match => {
           console.log(`received ${match.scheme} by ${match.loginId} declaring: ${message}`)
           const date_now = Date.now()
@@ -592,10 +588,10 @@ app.get(opts.session, function (req, res) {
             }
           }, { age: 0, template: '' }).template
           const prevTemplateFilled = prevTemplate
-            .replaceAll('{sessionhash}', idhash)
+            .replaceAll('{idhash}', idhash)
             .replaceAll('{domain}', domain)
             .replaceAll('{blocktime}', blocktime)
-            .replaceAll('{minihash}', minihash)
+            .replaceAll('{blockhash}', blockhash)
           if (false) { // if (prevTemplateFilled != message) {
             console.log(`terms changed for ${loginId}`)
             console.log(`old: ${prevTemplateFilled}`)
@@ -667,10 +663,6 @@ app.get(opts.session, function (req, res) {
     res.status(200).send(`{"error":"Unable to get blockchain tip: ${url1}"}`)
   })
 
-  }).catch(e => {
-    console.error(`error importing SHA-256 hashing library: ${e}`)
-    res.status(200).send(`{"error":"unexpected error: try again later"}`)
-  })
 })
 
 app.get(opts.route, function (req, res) {
@@ -707,12 +699,23 @@ console.log(`c`)
       const thb = ymdb % 6
       const tm = thb * 10
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
-      const minihash = hash.slice(-4)
+      const blockhash = hash.slice(-4)
+      const randomid = randomBytes(32).toString('hex')
+      let idhash
+      {
+        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
+        const userId = Buffer.from(randomid, 'hex')
+        const obfsId = Buffer.from(hashes.sha256(Buffer.concat([tagHash, tagHash, userId]))).toString('hex')
+//        const bytes = Uint8Array.from(Buffer.from(randomid, 'hex'))
+//        const hash = Buffer.from(hashes.sha256(bytes)).toString('hex')
+        idhash = obfsId
+      }
       const template = opts.message
       const message = template
+        .replaceAll('{idhash}', idhash
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
-        .replaceAll('{minihash}', minihash)
+        .replaceAll('{blockhash}', blockhash)
       const timestamp = block.timestamp
       //const message = `I hereby request access to ${domain} at ${time} (${hash.slice(-4)}) subject to the terms and policies then on file.`
 
@@ -746,7 +749,7 @@ console.log(`c`)
           res.redirect(`${opts.route}?signerror=Login+message+expired:+try+again.`)
         } else {
           verify(loginId, loginMessage, loginSig,
-            template, undefined, domain, blocktime, minihash, timestamp
+            template, undefined, domain, blocktime, blockhash, timestamp
           ).then(match => {
             console.log(`received ${match.scheme} by ${match.loginId}`)
             const date_now = Date.now()
@@ -759,9 +762,10 @@ console.log(`c`)
               }
             }, { age: 0, template: '' }).template
             const prevTemplateFilled = prevTemplate
+              .replaceAll('{idhash}', idhash)
               .replaceAll('{domain}', domain)
               .replaceAll('{blocktime}', blocktime)
-              .replaceAll('{minihash}', minihash)
+              .replaceAll('{blockhash}', blockhash)
             if (false) { // if (prevTemplateFilled != message) {
               console.log(`terms changed for ${loginId}`)
               console.log(`old: ${prevTemplateFilled}`)
@@ -930,6 +934,8 @@ console.log(`node ${process.version}`)
 console.log(`listening on port ${port}`)
 console.log(`mempool: ${opts.mempool}`)
 
+} // @noble/hashes
+} // @noble/secp256k1
 })
 })
 })
