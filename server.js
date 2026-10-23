@@ -64,11 +64,6 @@ const options = {
     short: 'a',
     default: '/'
   },
-  mempool: {
-    type: 'string',
-    short: 'm',
-    default: process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api',
-  },
   team: {
     type: 'string',
     short: 'w',
@@ -82,6 +77,9 @@ I ({idhash}), the undersigned, hereby access {domain} as of {blocktime} ({blockh
 subject to the terms and policies.`
   },
 }
+
+const MEMPOOL = process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api'
+const MEMPOOL2 = process.env.DNC_US_ALT_MEMPOOL_API || 'https://mempool.space/api'
 
 const { values: opts, positionals: args } = parseArgs({
   options,
@@ -402,7 +400,7 @@ app.get(opts.session, function (req, res) {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
 
-  const url1 = `${opts.mempool}/blocks/tip/hash`
+  const url1 = `${MEMPOOL}/blocks/tip/hash`
   fetch(url1).then(r => r.text()).then(text => {
     const hash = text
     if (!/[0-9a-fA-F]{64}/.test(text)) {
@@ -411,7 +409,7 @@ app.get(opts.session, function (req, res) {
       return
     }
 
-    const url2 = `${opts.mempool}/block/${hash}`
+    const url2 = `${MEMPOOL}/block/${hash}`
     fetch(url2).then(r => r.json()).then(block => {
       if (!block.height) {
         console.error(`error getting tip block: ${hash}: ${url2}`)
@@ -462,15 +460,32 @@ app.get(opts.session, function (req, res) {
           res.status(200).send(JSON.stringify(data))
         }
         if (checkAddress && permissions_db.data['pos']?.includes(payload.id)) {
-          fetch(`${opts.mempool}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
+          fetch(`${MEMPOOL}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
             const utxos = json.filter(utxo => {
               return utxo.value == checkAmount
                 && (utxo.status.confirmed == false
                  || utxo.status.block_height > checkHeight)
             })
-            if (utxos.length > 0) console.log(utxos)
-            data.paid = (utxos.length > 0)
-            finish()
+            if (utxos.length > 0) {
+              console.log(utxos)
+              data.paid = true
+              finish()
+            } else {
+              fetch(`${MEMPOOL2}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
+                const utxos = json.filter(utxo => {
+                  return utxo.value == checkAmount
+                    && (utxo.status.confirmed == false
+                     || utxo.status.block_height > checkHeight)
+                })
+                if (utxos.length > 0) {
+                  console.log('centralized', utxos)
+                  data.paid = true
+                } else {
+                  data.paid = false
+                }
+                finish()
+              })
+            }
           })
         } else {
           finish()
@@ -612,7 +627,7 @@ app.get(opts.session, function (req, res) {
 /*
             if (match.scheme == 'Bitcoin Signed Message') {
               screenUser = new Promise((resolve, reject) => {
-                fetch(`${opts.mempool}/address/${loginId}/txs`).then(r => r.json()).then(json => {
+                fetch(`${MEMPOOL}/address/${loginId}/txs`).then(r => r.json()).then(json => {
                   txs = json
                   if (txs.length == 0) {
                     reject('Bitcoin address not found on blockchain: use another.')
@@ -675,7 +690,7 @@ console.log(`c`)
   }
 
   // establish block time
-  fetch(`${opts.mempool}/blocks/tip/hash`).then(r => r.text()).then(text => {
+  fetch(`${MEMPOOL}/blocks/tip/hash`).then(r => r.text()).then(text => {
 
     const hash = text
     if (!/[0-9a-f]/.test(hash)) {
@@ -684,7 +699,7 @@ console.log(`c`)
       return
     }
 
-    fetch(`${opts.mempool}/block/${hash}`).then(r => r.json()).then(block => {
+    fetch(`${MEMPOOL}/block/${hash}`).then(r => r.json()).then(block => {
       const b = block.height
       const y = Math.floor(b / 52500)
       const yb = b % 52500
@@ -784,7 +799,7 @@ console.log(`c`)
 /*
             if (match.scheme == 'Bitcoin Signed Message') {
               screenUser = new Promise((resolve, reject) => {
-                fetch(`${opts.mempool}/address/${loginId}/txs`).then(r => r.json()).then(json => {
+                fetch(`${MEMPOOL}/address/${loginId}/txs`).then(r => r.json()).then(json => {
                   txs = json
                   if (txs.length == 0) {
                     reject('Bitcoin address not found on blockchain: use another.')
@@ -927,7 +942,7 @@ const port = +opts.port
 http.createServer(app_options, app).listen(port)
 console.log(`node ${process.version}`)
 console.log(`listening on port ${port}`)
-console.log(`mempool: ${opts.mempool}`)
+console.log(`mempool: ${MEMPOOL} / ${MEMPOOL2}`)
 
 }) // @noble/hashes
 }) // @noble/secp256k1
