@@ -81,6 +81,9 @@ subject to the terms and policies.`
 const MEMPOOL = process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api'
 const MEMPOOL2 = process.env.DNC_US_ALT_MEMPOOL_API || 'https://mempool.space/api'
 
+const seen = []
+const seen2 = []
+
 const { values: opts, positionals: args } = parseArgs({
   options,
   allowPositionals: true,
@@ -463,22 +466,30 @@ app.get(opts.session, function (req, res) {
           fetch(`${MEMPOOL}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
             const utxos = json.filter(utxo => {
               return utxo.value == checkAmount
+                && (!seen.includes(utxo.txid))
                 && (utxo.status.confirmed == false
                  || utxo.status.block_height > checkHeight)
             })
             if (utxos.length > 0) {
-              console.log(utxos)
+              seen = seen.filter(utxo => utxo.status.confirmed == false
+                                      || utxo.status.block_height <= checkHeight)
+              seen.push(...utxos)
+              console.log(utxos, seen)
               data.paid = true
               finish()
             } else {
               fetch(`${MEMPOOL2}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
                 const utxos = json.filter(utxo => {
                   return utxo.value == checkAmount
+                    && (!seen2.includes(utxo.txid))
                     && (utxo.status.confirmed == false
                      || utxo.status.block_height > checkHeight)
                 })
                 if (utxos.length > 0) {
-                  console.log(Date.now(), 'centralized', utxos)
+                  seen2 = seen2.filter(utxo => utxo.status.confirmed == false
+                                            || utxo.status.block_height <= checkHeight)
+                  seen2.push(...utxos)
+                  console.log(Date.now(), 'centralized', utxos, seen2)
                   data.paid = true
                 } else {
                   data.paid = false
