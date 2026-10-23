@@ -934,8 +934,8 @@ console.log(`node ${process.version}`)
 console.log(`listening on port ${port}`)
 console.log(`mempool: ${opts.mempool}`)
 
-} // @noble/hashes
-} // @noble/secp256k1
+}) // @noble/hashes
+}) // @noble/secp256k1
 })
 })
 })
