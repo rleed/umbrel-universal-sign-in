@@ -712,7 +712,7 @@ console.log(`c`)
       }
       const template = opts.message
       const message = template
-        .replaceAll('{idhash}', idhash
+        .replaceAll('{idhash}', idhash)
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
         .replaceAll('{blockhash}', blockhash)
