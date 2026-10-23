@@ -478,12 +478,15 @@ app.get(opts.session, function (req, res) {
                      || utxo.status.block_height > checkHeight)
                 })
                 if (utxos.length > 0) {
-                  console.log('centralized', utxos)
+                  console.log(Date.now(), 'centralized', utxos)
                   data.paid = true
                 } else {
                   data.paid = false
                 }
                 finish()
+                setTimeout(() => {
+                  console.log(Date.now(), `following up on centralized utxo`)
+                }, 60 * 1000)
               })
             }
           })
