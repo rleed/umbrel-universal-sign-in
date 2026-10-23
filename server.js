@@ -466,7 +466,7 @@ app.get(opts.session, function (req, res) {
           fetch(`${MEMPOOL}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
             const utxos = json.filter(utxo => {
               return utxo.value == checkAmount
-                && (seen.reduce((a,c) => a || c.txid == utxo.txid, false))
+                && (!seen.reduce((a,c) => a || c.txid == utxo.txid, false))
                 && (utxo.status.confirmed == false
                  || utxo.status.block_height > checkHeight)
             })
@@ -481,7 +481,7 @@ app.get(opts.session, function (req, res) {
               fetch(`${MEMPOOL2}/address/${checkAddress}/utxo`).then(r => r.json()).then(json => {
                 const utxos = json.filter(utxo => {
                   return utxo.value == checkAmount
-                    && (seen2.reduce((a,c) => a || c.txid == utxo.txid, false))
+                    && (!seen2.reduce((a,c) => a || c.txid == utxo.txid, false))
                     && (utxo.status.confirmed == false
                      || utxo.status.block_height > checkHeight)
                 })
