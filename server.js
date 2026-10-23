@@ -477,26 +477,28 @@ app.get(opts.session, function (req, res) {
         }
       }
 
-      if (!loginId && !loginSig && !logout && usstoken) {
-        let existingPayload
+      let existingPayload
+      if (usstoken) {
         try {
           existingPayload = jwt.verify(usstoken, process.env.DNC_US_SECRET)
         } catch (e) {
+          existingPayload = undefined
           console.error('Token verification failed:', e.message);
           res.status(200).send('{"error":"Invalid session token."}')
           return
         }
-        if (!existingPayload.t) {
+        if (!existingPayload?.t) {
           console.error('Token is missing t:', existingPayload);
           res.status(200).send('{"error":"Invalid session token."}')
           return
         }
-        if (!existingPayload.id) {
+        if (!existingPayload?.id) {
           console.error('Token is missing id:', existingPayload);
           res.status(200).send('{"error":"Invalid session token."}')
           return
         }
-        // console.log(`origin session accepted: ${origin} ${JSON.stringify(existingPayload)}`)
+      }
+      if (!loginId && !loginSig && !logout && existingPayload) {
         successHandler(existingPayload)
         return
       }
@@ -544,7 +546,7 @@ app.get(opts.session, function (req, res) {
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
       const blockhash = hash.slice(-4)
       const randomid = randomBytes(32).toString('hex')
-      let idhash = randomid
+      let idhash = existingPayload?.id || randomid
 //      {
 //        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
 //        const userId = Buffer.from(randomid, 'hex')
@@ -562,7 +564,7 @@ app.get(opts.session, function (req, res) {
       if (logout) {
         finisher(b, randomid, undefined, undefined)
       } else if (loginId || loginSig) {
-        idhash = loginId
+        idhash = existingPayload?.id || loginId
 //        {
 //          const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
 //          const userId = Buffer.from(loginId, 'hex')
