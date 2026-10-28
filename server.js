@@ -565,6 +565,7 @@ app.get(opts.session, function (req, res) {
       }
 
       let existingPayload
+      const randomid = randomBytes(32).toString('hex')
       if (usstoken) {
         try {
           existingPayload = jwt.verify(usstoken, process.env.DNC_US_SECRET)
@@ -605,7 +606,6 @@ app.get(opts.session, function (req, res) {
       const tm = thb * 10
       const blocktime = `${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')} ${String(ymd+1).padStart(2,'0')}/${String(ym+1).padStart(2,'0')}/${String(y+1).padStart(4,'0')} BTC`
       const blockhash = hash.slice(-4)
-      const randomid = randomBytes(32).toString('hex')
       let idhash = existingPayload?.id || randomid
 //      {
 //        const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
