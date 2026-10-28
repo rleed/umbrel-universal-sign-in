@@ -463,18 +463,19 @@ app.get(opts.session, function (req, res) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
         }
-console.log(customSet)
-console.log(customVar)
-console.log(customVal)
-console.log(customSet && customVar && customVal)
-console.log(permissions_db.data[`${customSet}`]?.includes(payload.id))
         if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
 console.log('a')
           if (!vars_db.data[`${customSet}`]) {
+console.log('b')
             vars_db.data[`${customSet}`] = {}
           }
+console.log('c')
           vars_db.data[`${customSet}`][`${customVar}`] = `${customVal}`
+console.log('d')
+console.log(vars_db.data)
+
           vars_db.write().then(()=>{
+console.log('e')
             data.set = true
           }).catch(e => console.log(`error writing db: ${e}`))
         }
