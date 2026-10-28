@@ -465,7 +465,7 @@ app.get(opts.session, function (req, res) {
           }
         }
         if (customGet && permissions_db.data[`${customGet}`]?.includes(payload.id)) {
-          data.get = vars_db.data[`${customGet}`]
+          data[`${customGet}`] = vars_db.data[`${customGet}`]
         }
         const finish = () => {
           //const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
