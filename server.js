@@ -533,35 +533,6 @@ app.get(opts.session, function (req, res) {
         }
       }
 
-      let existingPayload
-      if (usstoken) {
-        try {
-          existingPayload = jwt.verify(usstoken, process.env.DNC_US_SECRET)
-        } catch (e) {
-          existingPayload = undefined
-          console.error('Token verification failed:', e.message);
-          //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(block.height, randomid, undefined, undefined)
-          return
-        }
-        if (!existingPayload?.t) {
-          console.error('Token is missing t:', existingPayload);
-          //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(block.height, randomid, undefined, undefined)
-          return
-        }
-        if (!existingPayload?.id) {
-          console.error('Token is missing id:', existingPayload);
-          //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(block.height, randomid, undefined, undefined)
-          return
-        }
-      }
-      if (!loginId && !loginSig && !logout && existingPayload) {
-        successHandler(existingPayload)
-        return
-      }
-
       const finisher = (t, id, sig, match) => {
         const newPayload = {
           t,
@@ -592,6 +563,36 @@ app.get(opts.session, function (req, res) {
         res.set('Set-Cookie', `usstoken=${token}; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`)
         successHandler(newPayload)
       }
+
+      let existingPayload
+      if (usstoken) {
+        try {
+          existingPayload = jwt.verify(usstoken, process.env.DNC_US_SECRET)
+        } catch (e) {
+          existingPayload = undefined
+          console.error('Token verification failed:', e.message);
+          //res.status(200).send('{"error":"Invalid session token."}')
+          finisher(block.height, randomid, undefined, undefined)
+          return
+        }
+        if (!existingPayload?.t) {
+          console.error('Token is missing t:', existingPayload);
+          //res.status(200).send('{"error":"Invalid session token."}')
+          finisher(block.height, randomid, undefined, undefined)
+          return
+        }
+        if (!existingPayload?.id) {
+          console.error('Token is missing id:', existingPayload);
+          //res.status(200).send('{"error":"Invalid session token."}')
+          finisher(block.height, randomid, undefined, undefined)
+          return
+        }
+      }
+      if (!loginId && !loginSig && !logout && existingPayload) {
+        successHandler(existingPayload)
+        return
+      }
+
       const b = block.height
       const y = Math.floor(b / 52500)
       const yb = b % 52500
