@@ -112,6 +112,10 @@ app.set('trust proxy', true)
 app.use(cookieParser())
 
 
+function maskIP(url) {
+  return url.replace(/:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:\[0-9]+\//, '(hostname)')
+}
+
 function base64ToBytes(base64) {
   const binString = Buffer.from(base64, 'base64').toString('utf8');
   return Uint8Array.from(binString, (m) => m.codePointAt(0));
@@ -708,11 +712,11 @@ app.get(opts.session, function (req, res) {
       }
     }).catch(e => {
       console.error(`error getting block: ${e}: ${url2}`)
-      res.status(200).send(`{"error":"Unable to get block: ${url2}"}`)
+      res.status(200).send(`{"error":"Unable to get block: ${maskIP(url2)}"}`)
     })
   }).catch(e => {
     console.error(`error getting blockchain tip: ${e}: ${url1}`)
-    res.status(200).send(`{"error":"Unable to get blockchain tip: ${url1}"}`)
+    res.status(200).send(`{"error":"Unable to get blockchain tip: ${maskIP(url1)}"}`)
   })
 
 })
