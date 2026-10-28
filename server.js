@@ -81,7 +81,7 @@ subject to the terms and policies.`
 const MEMPOOL = process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api'
 const MEMPOOL2 = process.env.DNC_US_ALT_MEMPOOL_API || 'https://mempool.space/api'
 
-const PUBLIC_VARS = JSON.parse(process.env.DNC_US_PUBLIC_VARS) || []
+const PUBLIC_VARS = process.env.DNC_US_PUBLIC_VARS? JSON.parse(process.env.DNC_US_PUBLIC_VARS): []
 
 let seen = []
 let seen2 = []
