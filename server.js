@@ -463,6 +463,9 @@ app.get(opts.session, function (req, res) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
         }
+console.log(customSet)
+console.log(customVar)
+console.log(customVal)
         if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
           if (!vars_db.data[`${customSet}`]) {
             vars_db.data[`${customSet}`] = {}
