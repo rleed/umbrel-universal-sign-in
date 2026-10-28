@@ -436,10 +436,11 @@ app.get(opts.session, function (req, res) {
       const checkAmount  = req.query.amt
       const checkHeight  = req.query.h
 
-      /* requires custom permission */
+      /* requires <customSet/customGet> permission */
       const customSet = req.query.set
       const customVar = req.query.var
       const customVal = req.query.val
+      const customGet = req.query.get
 
       const usstoken = req.cookies.usstoken
 
@@ -462,6 +463,9 @@ app.get(opts.session, function (req, res) {
           if (process.env.DNC_US_FALLBACK_RECV_ADDR) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
+        }
+        if (customGet && permissions_db.data[`${customGet}`]?.includes(payload.id)) {
+          data.get = vars_db.data[`${customGet}`]
         }
         const finish = () => {
           //const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
