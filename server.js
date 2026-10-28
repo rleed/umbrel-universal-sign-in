@@ -466,7 +466,10 @@ app.get(opts.session, function (req, res) {
 console.log(customSet)
 console.log(customVar)
 console.log(customVal)
+console.log(customSet && customVar && customVal)
+console.log(permissions_db.data[`${customSet}`]?.includes(payload.id))
         if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
+console.log('a')
           if (!vars_db.data[`${customSet}`]) {
             vars_db.data[`${customSet}`] = {}
           }
