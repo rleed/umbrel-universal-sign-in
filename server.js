@@ -98,6 +98,9 @@ activity_db.read()
 const adapter3 = new JSONFile(`${opts.datapath}permissions.json`)
 const permissions_db = new Low(adapter3, {})
 permissions_db.read()
+const adapter4 = new JSONFile(`${opts.datapath}vars.json`)
+const vars_db = new Low(adapter4, {})
+vars_db.read()
 
 let team_id = undefined
 
@@ -433,6 +436,11 @@ app.get(opts.session, function (req, res) {
       const checkAmount  = req.query.amt
       const checkHeight  = req.query.h
 
+      /* requires custom permission */
+      const customSet = req.query.set
+      const customVar = req.query.var
+      const customVal = req.query.val
+
       const usstoken = req.cookies.usstoken
 
       successHandler = payload => {
@@ -454,6 +462,15 @@ app.get(opts.session, function (req, res) {
           if (process.env.DNC_US_FALLBACK_RECV_ADDR) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
+        }
+        if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
+          if (!vars_db.data[`${customSet}`]) {
+            vars_db.data[`${customSet}`] = {}
+          }
+          vars_db.data[`${customSet}`][`${customVar}`] = `${customVal}`
+          vars_db.write().then(()=>{
+            data.set = true
+          }).catch(e => console.log(`error writing db: ${e}`))
         }
         const finish = () => {
           //const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
