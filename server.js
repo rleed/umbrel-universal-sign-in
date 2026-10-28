@@ -113,7 +113,7 @@ app.use(cookieParser())
 
 
 function maskIP(url) {
-  return url.replace(/:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:\[0-9]+\//, '(hostname)')
+  return url.replace(/:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+\//, '(hostname)')
 }
 
 function base64ToBytes(base64) {
