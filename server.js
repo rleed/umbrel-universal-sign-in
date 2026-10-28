@@ -463,22 +463,6 @@ app.get(opts.session, function (req, res) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
         }
-        if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
-console.log('a')
-          if (!vars_db.data[`${customSet}`]) {
-console.log('b')
-            vars_db.data[`${customSet}`] = {}
-          }
-console.log('c')
-          vars_db.data[`${customSet}`][`${customVar}`] = `${customVal}`
-console.log('d')
-console.log(vars_db.data)
-
-          vars_db.write().then(()=>{
-console.log('e')
-            data.set = true
-          }).catch(e => console.log(`error writing db: ${e}`))
-        }
         const finish = () => {
           //const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
           //const userId = Buffer.from(data.payload.id, 'hex')
@@ -525,6 +509,14 @@ console.log('e')
               })
             }
           })
+        } else if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
+          if (!vars_db.data[`${customSet}`]) {
+            vars_db.data[`${customSet}`] = {}
+          }
+          vars_db.data[`${customSet}`][`${customVar}`] = `${customVal}`
+          vars_db.write().then(()=>{
+            data.set = true
+          }).catch(e => console.log(`error writing db: ${e}`)).finally(() => finish())
         } else {
           finish()
         }
