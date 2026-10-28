@@ -541,19 +541,19 @@ app.get(opts.session, function (req, res) {
           existingPayload = undefined
           console.error('Token verification failed:', e.message);
           //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(b, randomid, undefined, undefined)
+          finisher(block.height, randomid, undefined, undefined)
           return
         }
         if (!existingPayload?.t) {
           console.error('Token is missing t:', existingPayload);
           //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(b, randomid, undefined, undefined)
+          finisher(block.height, randomid, undefined, undefined)
           return
         }
         if (!existingPayload?.id) {
           console.error('Token is missing id:', existingPayload);
           //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(b, randomid, undefined, undefined)
+          finisher(block.height, randomid, undefined, undefined)
           return
         }
       }
