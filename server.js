@@ -83,7 +83,7 @@ const MEMPOOL2 = process.env.DNC_US_ALT_MEMPOOL_API || 'https://mempool.space/ap
 
 const PUBLIC_VARS = process.env.DNC_US_PUBLIC_VARS? JSON.parse(process.env.DNC_US_PUBLIC_VARS): []
 
-const TRIGGER_FILE = process.env.DNC_US_TRIGGER_FILE || '/tmp/ln-swap-trigger'
+const TRIGGER_URL = process.env.DNC_US_TRIGGER_URL
 
 let seen = []
 let seen2 = []
@@ -123,6 +123,7 @@ function base64ToBytes(base64) {
   return Uint8Array.from(binString, (m) => m.codePointAt(0));
 }
 
+/*
 function touch(filename) {
   const time = new Date()
   try {
@@ -136,6 +137,7 @@ function touch(filename) {
     }
   }
 }
+*/
 
 app.get(`${opts.route}/qr`, (req, res) => {
   const text = req.query.text || 'Hello World'
@@ -526,7 +528,11 @@ app.get(opts.session, function (req, res) {
                   seen2.push(...utxos)
                   console.log(Date.now(), 'centralized', utxos, seen2)
                   data.paid = true
-                  touch(TRIGGER_FILE)
+                  if (TRIGGER_URL) {
+                    fetch(TRIGGER_URL).catch(e => {
+                      console.error(e)
+                    }
+                  }
                 } else {
                   data.paid = false
                 }
