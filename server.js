@@ -130,7 +130,7 @@ function touch(filename) {
   } catch (err) {
     if (err.code === 'ENOENT') {
       let fh = fs.openSync(filename, 'a')
-      fh.closeSync()
+      fs.closeSync(fh)
     } else {
       throw err
     }
