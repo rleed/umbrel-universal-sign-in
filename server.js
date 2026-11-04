@@ -123,18 +123,18 @@ function base64ToBytes(base64) {
   return Uint8Array.from(binString, (m) => m.codePointAt(0));
 }
 
-async function touch(filename) {
-    const time = new Date();
-    try {
-        await fs.utimes(filename, time, time);
-    } catch (err) {
-        if (err.code === 'ENOENT') {
-            let fh = await fs.open(filename, 'a');
-            await fh.close();
-        } else {
-            throw err;
-        }
+function touch(filename) {
+  const time = new Date()
+  try {
+    fs.utimesSync(filename, time, time)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      let fh = fs.openSync(filename, 'a')
+      fh.closeSync()
+    } else {
+      throw err
     }
+  }
 }
 
 app.get(`${opts.route}/qr`, (req, res) => {
