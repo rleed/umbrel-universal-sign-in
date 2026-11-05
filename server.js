@@ -531,7 +531,7 @@ app.get(opts.session, function (req, res) {
                   if (TRIGGER_URL) {
                     fetch(TRIGGER_URL).catch(e => {
                       console.error(e)
-                    }
+                    })
                   }
                 } else {
                   data.paid = false
