@@ -81,7 +81,7 @@ subject to the terms and policies.`
 const MEMPOOL = process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api'
 const MEMPOOL2 = process.env.DNC_US_ALT_MEMPOOL_API || 'https://mempool.space/api'
 
-const PUBLIC_VARS = process.env.DNC_US_PUBLIC_VARS? JSON.parse(process.env.DNC_US_PUBLIC_VARS): []
+const PUBLIC_RO_VARS = process.env.DNC_US_PUBLIC_RO_VARS? JSON.parse(process.env.DNC_US_PUBLIC_RO_VARS): []
 
 const TRIGGER_URL = process.env.DNC_US_TRIGGER_URL
 
@@ -488,8 +488,10 @@ app.get(opts.session, function (req, res) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
         }
+console.log(`try to get '${customGet}'`)
+console.log(`note: PUBLIC_RO_VARS == ${JSON.stringify(PUBLIC_RO_VARS)}`)
         if (customGet && (permissions_db.data[`${customGet}`]?.includes(payload.id)
-                       || PUBLIC_VARS.includes(`${customGet}`))) {
+                       || PUBLIC_RO_VARS.includes(`${customGet}`))) {
           data[`${customGet}`] = vars_db.data[`${customGet}`]
         }
         const finish = () => {
