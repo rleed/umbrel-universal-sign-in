@@ -81,7 +81,10 @@ subject to the terms and policies.`
 const MEMPOOL = process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api'
 const MEMPOOL2 = process.env.DNC_US_ALT_MEMPOOL_API || 'https://mempool.space/api'
 
-const PUBLIC_RO_VARS = process.env.DNC_US_PUBLIC_RO_VARS? JSON.parse(process.env.DNC_US_PUBLIC_RO_VARS): []
+const PUBLIC_RO_VARS = []
+if (process.env.DNC_US_PUBLIC_RO_VARS) {
+  PUBLIC_RO_VARS.push(...JSON.parse(process.env.DNC_US_PUBLIC_RO_VARS))
+}
 
 const TRIGGER_URL = process.env.DNC_US_TRIGGER_URL
 
