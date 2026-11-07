@@ -176,6 +176,23 @@ const post_options = {
 }
 
 
+function tapTweak(xOnlyInternalKey) {
+  if (!/^[0-9a-fA-F]{64}$/.test(xOnlyInternalKey)) {
+    console.log('invalid x-only internal key: expected 64 hex characters')
+    return undefined
+  }
+  const hexk = xOnlyInternalKey
+  const text = 'TapTweak'
+  const merkleRoot = Array.from(Uint8Array.fromHex(''))
+  const bytes = Array.from(Uint8Array.fromHex(hexk))
+  const hash = Buffer.from(hashes.sha256(new TextEncoder().encode(text)))
+  const tag = Array.from(new Uint8Array(hash))
+  const data = new Uint8Array([].concat(tag, tag, bytes, merkleRoot))
+  const bytes2 = Buffer.from(hashes.sha256(data))
+  const tweak = new Uint8Array(bytes2).toHex()
+  return tweak
+}
+
 function loginMattermost(res, id) {
   const injectSession = (username) => {
     return new Promise((resolve, reject) => {
@@ -350,11 +367,15 @@ function verify(id, message, sig, ...aux) {
     if (atSign !== -1) {
       pubkey = pubkey.slice(0, atSign)
     }
+    if (!/^[0-9a-fA-F]{66}$/.test(pubkey)) pubkey = undefined
     verifyLightningMessage(pubkey, message, sig).then(valid => {
       if (valid) {
+        const xOnlyInternalPubkey = pubkey.substr(2)
+        const npubHex = tapTweak(pubkey.substr(2))
         resolve({
           scheme: 'Lightning Signed Message',
           loginId: pubkey,
+          npubHex: npubHex,
           message,
           sig
         })
@@ -492,8 +513,6 @@ app.get(opts.session, function (req, res) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
         }
-console.log(`try to get '${customGet}'`)
-console.log(`note: PUBLIC_RO_VARS == ${JSON.stringify(PUBLIC_RO_VARS)}`)
         if (customGet && (permissions_db.data[`${customGet}`]?.includes(payload.id)
                        || PUBLIC_RO_VARS.includes(`${customGet}`))) {
           data[`${customGet}`] = vars_db.data[`${customGet}`]
@@ -574,6 +593,7 @@ console.log(`note: PUBLIC_RO_VARS == ${JSON.stringify(PUBLIC_RO_VARS)}`)
           t,
           id,
           form_of_id: match?.scheme,
+          npub: match?.npubHex,
         }
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
