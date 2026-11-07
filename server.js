@@ -463,7 +463,8 @@ app.get(opts.session, function (req, res) {
       const checkAmount  = req.query.amt
       const checkHeight  = req.query.h
 
-      /* requires <customSet/customGet> permission */
+      /* requires <customDel/customSet/customGet> permission */
+      const customDel = req.query.del
       const customSet = req.query.set
       const customVar = req.query.var
       const customVal = req.query.val
@@ -555,6 +556,13 @@ console.log(`note: PUBLIC_RO_VARS == ${JSON.stringify(PUBLIC_RO_VARS)}`)
           vars_db.data[`${customSet}`][`${customVar}`] = `${customVal}`
           vars_db.write().then(()=>{
             data.set = true
+          }).catch(e => console.log(`error writing db: ${e}`)).finally(() => finish())
+        } else if (customDel && customVar && permissions_db.data[`${customDel}`]?.includes(payload.id)) {
+          if (vars_db.data[`${customDel}`]) {
+            delete vars_db.data[`${customDel}`][`${customVar}`]
+          }
+          vars_db.write().then(()=>{
+            data.del = true
           }).catch(e => console.log(`error writing db: ${e}`)).finally(() => finish())
         } else {
           finish()
