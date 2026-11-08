@@ -589,11 +589,16 @@ app.get(opts.session, function (req, res) {
       }
 
       const finisher = (t, id, sig, match) => {
+        let npub
+        if (match?.npubHex) {
+          const words = bech32.toWords(Buffer.from(match.npubHex, 'hex'))
+          npub = bech32.encode('npub', words)
+        }
         const newPayload = {
           t,
           id,
           form_of_id: match?.scheme,
-          npub: match?.npubHex? bech32.encode('npub', Buffer.from(match?.npubHex, 'hex')): undefined,
+          npub,
         }
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
