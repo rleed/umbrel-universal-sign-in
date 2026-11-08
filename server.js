@@ -16,8 +16,10 @@ const { randomBytes } = require('node:crypto');
 
 import('lowdb/node').then(lowdb_node => {
   JSONFile = lowdb_node.JSONFile
+  JSONFileSync = lowdb_node.JSONFileSync
 import('lowdb').then(lowdb => {
   Low = lowdb.Low
+  LowSync = lowdb.LowSync
 import('@nostr/tools/pure').then(nostr_tools_pure => {
   const { getEventHash } = nostr_tools_pure
 import('@noble/secp256k1').then(secp => {
