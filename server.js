@@ -105,8 +105,8 @@ activity_db.read()
 const adapter3 = new JSONFile(`${opts.datapath}permissions.json`)
 const permissions_db = new Low(adapter3, {})
 permissions_db.read()
-const adapter4 = new JSONFile(`${opts.datapath}vars.json`)
-const vars_db = new Low(adapter4, {})
+const adapter4 = new JSONFileSync(`${opts.datapath}vars.json`)
+const vars_db = new LowSync(adapter4, {})
 vars_db.read()
 
 let team_id = undefined
@@ -517,6 +517,29 @@ app.get(opts.session, function (req, res) {
                        || PUBLIC_RO_VARS.includes(`${customGet}`))) {
           data[`${customGet}`] = vars_db.data[`${customGet}`]
         }
+        if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
+          if (!vars_db.data[`${customSet}`]) {
+            vars_db.data[`${customSet}`] = {}
+          }
+          vars_db.data[`${customSet}`][`${customVar}`] = `${customVal}`
+          try {
+            vars_db.write()
+            data.set = true
+          } catch(e) {
+            console.log(`error writing db: ${e}`)
+          }
+        }
+        if (customDel && customVar && permissions_db.data[`${customDel}`]?.includes(payload.id)) {
+          if (vars_db.data[`${customDel}`]) {
+            delete vars_db.data[`${customDel}`][`${customVar}`]
+          }
+          try {
+            vars_db.write()
+            data.del = true
+          } catch(e) {
+            console.log(`error writing db: ${e}`)
+          }
+        }
         const finish = () => {
           //const tagHash = Buffer.from(hashes.sha256(Uint8Array.from(Buffer.from(process.env.DNC_US_USER_PRIVACY_TAG, 'utf8'))))
           //const userId = Buffer.from(data.payload.id, 'hex')
@@ -568,21 +591,6 @@ app.get(opts.session, function (req, res) {
               })
             }
           })
-        } else if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
-          if (!vars_db.data[`${customSet}`]) {
-            vars_db.data[`${customSet}`] = {}
-          }
-          vars_db.data[`${customSet}`][`${customVar}`] = `${customVal}`
-          vars_db.write().then(()=>{
-            data.set = true
-          }).catch(e => console.log(`error writing db: ${e}`)).finally(() => finish())
-        } else if (customDel && customVar && permissions_db.data[`${customDel}`]?.includes(payload.id)) {
-          if (vars_db.data[`${customDel}`]) {
-            delete vars_db.data[`${customDel}`][`${customVar}`]
-          }
-          vars_db.write().then(()=>{
-            data.del = true
-          }).catch(e => console.log(`error writing db: ${e}`)).finally(() => finish())
         } else {
           finish()
         }
