@@ -593,7 +593,7 @@ app.get(opts.session, function (req, res) {
           t,
           id,
           form_of_id: match?.scheme,
-          npub: match?.npubHex,
+          npub: match?.npubHex? bech32.encode('npub', Buffer.from(match?.npubHex, 'hex')): undefined,
         }
         if (id && sig && match) {
           console.log(`successful login by ${match.loginId}`)
