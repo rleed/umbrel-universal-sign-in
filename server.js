@@ -183,13 +183,13 @@ function tapTweak(xOnlyInternalKey) {
   }
   const hexk = xOnlyInternalKey
   const text = 'TapTweak'
-  const merkleRoot = Array.from(Uint8Array.fromHex(''))
-  const bytes = Array.from(Uint8Array.fromHex(hexk))
+  const merkleRoot = Array.from(Uint8Array.from(Buffer.from('', 'hex')))
+  const bytes = Array.from(Uint8Array.from(Buffer.from(hexk, 'hex')))
   const hash = Buffer.from(hashes.sha256(new TextEncoder().encode(text)))
   const tag = Array.from(new Uint8Array(hash))
   const data = new Uint8Array([].concat(tag, tag, bytes, merkleRoot))
   const bytes2 = Buffer.from(hashes.sha256(data))
-  const tweak = new Uint8Array(bytes2).toHex()
+  const tweak = bytes2.toString('hex')
   return tweak
 }
 
