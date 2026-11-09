@@ -516,10 +516,13 @@ app.get(opts.session, function (req, res) {
           }
         }
         if (customGet && (permissions_db.data[`${customGet}`]?.includes(payload.id)
+                       || permissions_db.data[`${customGet}:get`]?.includes(payload.id)
                        || PUBLIC_RO_VARS.includes(`${customGet}`))) {
           data[`${customGet}`] = vars_db.data[`${customGet}`]
         }
-        if (customSet && customVar && customVal && permissions_db.data[`${customSet}`]?.includes(payload.id)) {
+        if (customSet && customVar && customVal
+        && (permissions_db.data[`${customSet}`]?.includes(payload.id)
+         || permissions_db.data[`${customSet}:set`]?.includes(payload.id))) {
           if (!vars_db.data[`${customSet}`]) {
             vars_db.data[`${customSet}`] = {}
           }
@@ -531,7 +534,9 @@ app.get(opts.session, function (req, res) {
             console.log(`error writing db: ${e}`)
           }
         }
-        if (customDel && customVar && permissions_db.data[`${customDel}`]?.includes(payload.id)) {
+        if (customDel && customVar
+        && (permissions_db.data[`${customDel}`]?.includes(payload.id)
+         || permissions_db.data[`${customDel}:set`]?.includes(payload.id))) {
           if (vars_db.data[`${customDel}`]) {
             delete vars_db.data[`${customDel}`][`${customVar}`]
           }
@@ -614,7 +619,13 @@ app.get(opts.session, function (req, res) {
           console.log(`successful login by ${match.loginId}`)
           Object.keys(permissions_db.data).forEach(key => {
             if (permissions_db.data[key].includes(id)) {
-              newPayload[`acl_${key}`] = true
+              if (key.includes(':')) {
+                const verb = key.substr(key.indexOf(':')+1)
+                const perm = key.substr(0,key.indexOf(':'))
+                newPayload[`acl_${verb}_${perm}`] = true
+              } else {
+                newPayload[`acl_${key}`] = true
+              }
             }
           })
           activity_db.data.push({
