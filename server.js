@@ -622,7 +622,7 @@ app.get(opts.session, function (req, res) {
               if (key.includes(':')) {
                 const verb = key.substr(key.indexOf(':')+1)
                 const perm = key.substr(0,key.indexOf(':'))
-                newPayload[`acl_${verb}_${perm}`] = true
+                newPayload[`acl_${perm}_${verb}`] = true
               } else {
                 newPayload[`acl_${key}`] = true
               }
