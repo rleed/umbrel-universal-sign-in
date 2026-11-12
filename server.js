@@ -436,7 +436,7 @@ function verify(id, message, sig, ...aux) {
 
 
 
-app.get(opts.session, function (req, res) {
+const get_post_session = function (req, res) {
   const origin = req.headers['origin']
   if (!origin.startsWith('https://')) {
     console.log(`protocol rejected: ${origin}`)
@@ -490,7 +490,7 @@ app.get(opts.session, function (req, res) {
       const customDel = req.query.del
       const customSet = req.query.set
       const customVar = req.query.var
-      const customVal = req.query.val
+      const customVal = req.query.val || req.body
       const customGet = req.query.get
 
       const usstoken = req.cookies.usstoken
@@ -803,6 +803,8 @@ app.get(opts.session, function (req, res) {
   })
 
 })
+app.post(opts.session, get_post_session)
+app.get(opts.session, get_post_session)
 
 app.get(opts.route, function (req, res) {
 console.log(`c`)
