@@ -802,7 +802,7 @@ const get_post_session = function (req, res) {
     res.status(200).send(`{"error":"Unable to get blockchain tip: ${maskIP(url1)}"}`)
   })
 
-})
+}
 app.post(opts.session, get_post_session)
 app.get(opts.session, get_post_session)
 
