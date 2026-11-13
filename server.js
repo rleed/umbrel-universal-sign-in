@@ -437,6 +437,7 @@ function verify(id, message, sig, ...aux) {
 
 
 const get_post_session = function (req, res) {
+console.log('a')
   const origin = req.headers['origin']
   if (!origin.startsWith('https://')) {
     console.log(`protocol rejected: ${origin}`)
@@ -492,6 +493,7 @@ const get_post_session = function (req, res) {
       const customVar = req.query.var
       const customVal = req.query.val || req.body
       const customGet = req.query.get
+console.log('b', customVal)
 
       const usstoken = req.cookies.usstoken
 
