@@ -117,7 +117,7 @@ var app = express()
 var app_options = {}
 app.set('trust proxy', true)
 app.use(cookieParser())
-app.use(bodyParser())
+app.use(express.text())
 
 
 function maskIP(url) {
