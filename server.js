@@ -807,6 +807,7 @@ console.log('b', customVal)
 }
 app.post(opts.session, get_post_session)
 app.get(opts.session, get_post_session)
+app.options(opts.session, cors())
 
 app.get(opts.route, function (req, res) {
 console.log(`c`)
