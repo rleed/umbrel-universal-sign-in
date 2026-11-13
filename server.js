@@ -457,6 +457,10 @@ console.log('a')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.set('Access-Control-Allow-Credentials', 'true')
 
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200)
+  }
+
   const url1 = `${MEMPOOL}/blocks/tip/hash`
   fetch(url1).then(r => r.text()).then(text => {
     const hash = text
@@ -807,7 +811,7 @@ console.log('b', customVal)
 }
 app.post(opts.session, get_post_session)
 app.get(opts.session, get_post_session)
-app.options(opts.session, cors())
+app.options(opts.session, get_post_session)
 
 app.get(opts.route, function (req, res) {
 console.log(`c`)
