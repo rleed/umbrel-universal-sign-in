@@ -497,7 +497,7 @@ console.log('a')
       const customVar = req.query.var
       const customVal = req.query.val || req.body
       const customGet = req.query.get
-console.log('b', customVal)
+console.log('b', customVal, req.body)
 
       const usstoken = req.cookies.usstoken
 
