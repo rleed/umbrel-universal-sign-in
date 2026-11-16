@@ -497,7 +497,6 @@ console.log('a')
       const customVar = req.query.var
       const customVal = req.query.val || req.body
       const customGet = req.query.get
-console.log('b', customVal, req.body)
 
       const usstoken = req.cookies.usstoken
 
@@ -524,7 +523,13 @@ console.log('b', customVal, req.body)
         if (customGet && (permissions_db.data[`${customGet}`]?.includes(payload.id)
                        || permissions_db.data[`${customGet}:get`]?.includes(payload.id)
                        || PUBLIC_RO_VARS.includes(`${customGet}`))) {
-          data[`${customGet}`] = vars_db.data[`${customGet}`]
+          if (customVar) {
+            data[`${customGet}`] = {}
+            data[`${customGet}`][`${customVar}`] =
+              vars_db.data[`${customGet}`][`${customVar}`]
+          } else {
+            data[`${customGet}`] = vars_db.data[`${customGet}`]
+          }
         }
         if (customSet && customVar && customVal
         && (permissions_db.data[`${customSet}`]?.includes(payload.id)
