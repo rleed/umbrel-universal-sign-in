@@ -373,8 +373,7 @@ function verify(id, message, sig, ...aux) {
     if (!/^[0-9a-fA-F]{66}$/.test(pubkey)) pubkey = undefined
     verifyLightningMessage(pubkey, message, sig).then(valid => {
       if (valid) {
-        const xOnlyInternalPubkey = pubkey.substr(2)
-        const npubHex = tapTweak(pubkey.substr(2))
+        const npubHex = pubkey.substr(2)
         resolve({
           scheme: 'Lightning Signed Message',
           loginId: pubkey,
