@@ -526,7 +526,7 @@ console.log('a')
           if (customVar) {
             data[`${customGet}`] = {}
             data[`${customGet}`][`${customVar}`] =
-              vars_db.data[`${customGet}`][`${customVar}`]
+              vars_db.data[`${customGet}`]?.[`${customVar}`]
           } else {
             data[`${customGet}`] = vars_db.data[`${customGet}`]
           }
