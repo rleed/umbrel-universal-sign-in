@@ -83,6 +83,10 @@ subject to the terms and policies.`
 const MEMPOOL = process.env.DNC_US_MEMPOOL_API || 'https://mempool.guide/api'
 const MEMPOOL2 = process.env.DNC_US_ALT_MEMPOOL_API || 'https://mempool.space/api'
 
+const BCRPC_URL = process.env.DNC_US_BCRPC_URL
+const BCRPC_USER = process.env.DNC_US_BCRPC_USER
+const BCRPC_PASS = process.env.DNC_US_BCRPC_PASS
+
 const PUBLIC_RO_VARS = []
 if (process.env.DNC_US_PUBLIC_RO_VARS) {
   PUBLIC_RO_VARS.push(...JSON.parse(process.env.DNC_US_PUBLIC_RO_VARS))
@@ -461,7 +465,7 @@ console.log('a')
     return res.sendStatus(200)
   }
 
-  debug.log(`Bitcoin RPC URL: ${BCRPC}`)
+  debug.log(`Bitcoin RPC URL: ${BCRPC_URL} ${BCRPC_USER}`)
   const url1 = `${MEMPOOL}/blocks/tip/hash`
   fetch(url1).then(r => r.text()).then(text => {
     const hash = text
