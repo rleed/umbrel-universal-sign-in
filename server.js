@@ -92,6 +92,8 @@ if (process.env.DNC_US_PUBLIC_RO_VARS) {
   PUBLIC_RO_VARS.push(...JSON.parse(process.env.DNC_US_PUBLIC_RO_VARS))
 }
 
+const SIGNEDIN_RO_VARS = JSON.parse(process.env.DNC_US_SIGNEDIN_RO_VARS||'[]')
+
 const TRIGGER_URL = process.env.DNC_US_TRIGGER_URL
 
 let seen = []
@@ -537,9 +539,13 @@ const get_post_session = function (req, res) {
             data.addresses.push(process.env.DNC_US_FALLBACK_RECV_ADDR)
           }
         }
-        if (customGet && (permissions_db.data[`${customGet}`]?.includes(payload.id)
-                       || permissions_db.data[`${customGet}:get`]?.includes(payload.id)
-                       || PUBLIC_RO_VARS.includes(`${customGet}`))) {
+        if (customGet
+        && (permissions_db.data[`${customGet}`]?.includes(payload.id)
+         || permissions_db.data[`${customGet}:get`]?.includes(payload.id)
+         || PUBLIC_RO_VARS.includes(`${customGet}`)
+         || (SIGNEDIN_RO_VARS.includes(`${customGet}`)
+          && payload.form_of_id)))
+        {
           if (customVar) {
             data[`${customGet}`] = {}
             data[`${customGet}`][`${customVar}`] =
