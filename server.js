@@ -480,6 +480,7 @@ const get_post_session = function (req, res) {
   }).then(r => r.json()).then(json => {
     const hash = json.result.bestblockhash
     const block_height = json.result.blocks
+    const block_timestamp = json.result.time
 
     if (!/[0-9a-fA-F]{64}/.test(hash)) {
       console.error(`error getting chain tip: ${url1}`)
@@ -728,7 +729,7 @@ const get_post_session = function (req, res) {
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
         .replaceAll('{blockhash}', blockhash)
-      const timestamp = block.timestamp
+      const timestamp = block_timestamp
       let id, sig
       if (logout) {
         finisher(b, randomid, undefined, undefined)
@@ -862,6 +863,7 @@ console.log(`c`)
     console.log(json)
     const hash = json.result.bestblockhash
     const block_height = json.result.blocks
+    const block_timestamp = json.result.time
 
     if (!/[0-9a-fA-F]{64}/.test(hash)) {
       console.error(`error getting chain tip: ${url1}`)
@@ -905,7 +907,7 @@ console.log(`c`)
         .replaceAll('{domain}', domain)
         .replaceAll('{blocktime}', blocktime)
         .replaceAll('{blockhash}', blockhash)
-      const timestamp = block.timestamp
+      const timestamp = block_timestamp
       //const message = `I hereby request access to ${domain} at ${time} (${hash.slice(-4)}) subject to the terms and policies then on file.`
 
       // show modified login page
