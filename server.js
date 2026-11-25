@@ -476,6 +476,7 @@ const get_post_session = function (req, res) {
   */
   const url1 = `${BCRPC_URL}`
   fetch(url1, {
+    method: 'POST',
     headers: {
       'Authorization': `Basic ${btoa(`${BCRPC_USER}:${BCRPC_PASS}`)}`,
       'Content-Type': `text/plain;`,
