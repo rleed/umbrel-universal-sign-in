@@ -842,7 +842,7 @@ const get_post_session = function (req, res) {
     })
     */
   }).catch(e => {
-    console.error(`fetch/catch-all error`)
+    console.error(`fetch/catch-all error: ${e}`)
     res.status(200).send(`{"error":"An error occurred."}`)
   })
 
