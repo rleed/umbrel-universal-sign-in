@@ -464,16 +464,6 @@ const get_post_session = function (req, res) {
     return res.sendStatus(200)
   }
 
-  /*
-  const url1 = `${MEMPOOL}/blocks/tip/hash`
-  fetch(url1).then(r => r.text()).then(text => {
-    const hash = text
-    if (!/[0-9a-fA-F]{64}/.test(text)) {
-      console.error(`error getting chain tip: ${text}: ${url1}`)
-      res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
-      return
-    }
-  */
   const url1 = `${BCRPC_URL}`
   fetch(url1, {
     method: 'POST',
@@ -488,7 +478,6 @@ const get_post_session = function (req, res) {
       params: [],
     })
   }).then(r => r.json()).then(json => {
-    console.log(json)
     const hash = json.result.bestblockhash
     const block_height = json.result.blocks
 
@@ -498,11 +487,6 @@ const get_post_session = function (req, res) {
       res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
       return
     }
-
-    /*
-    const url2 = `${MEMPOOL}/block/${hash}`
-    fetch(url2).then(r => r.json()).then(block => {
-    */
     if (!block_height) {
       console.error(`error getting chain tip: ${url1}`)
       console.error(`${JSON.stringify(json)}`)
@@ -836,17 +820,10 @@ const get_post_session = function (req, res) {
       } else {
         finisher(b, randomid, undefined, undefined)
       }
-    /*
-    }).catch(e => {
-      console.error(`error getting block: ${e}: ${url2}`)
-      res.status(200).send(`{"error":"Unable to get block: ${maskIP(url2)}"}`)
-    })
-    */
   }).catch(e => {
     console.error(`fetch/catch-all error: ${e}`)
     res.status(200).send(`{"error":"An error occurred."}`)
   })
-
 }
 app.post(opts.session, get_post_session)
 app.get(opts.session, get_post_session)
@@ -870,6 +847,7 @@ console.log(`c`)
   */
   const url1 = `${BCRPC_URL}`
   fetch(url1, {
+    method: 'POST',
     headers: {
       'Authorization': `Basic ${btoa(`${BCRPC_USER}:${BCRPC_PASS}`)}`,
       'Content-Type': `text/plain;`,
