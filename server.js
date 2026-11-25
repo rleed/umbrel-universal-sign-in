@@ -441,7 +441,6 @@ function verify(id, message, sig, ...aux) {
 
 
 const get_post_session = function (req, res) {
-console.log('a')
   const origin = req.headers['origin']
   if (!origin.startsWith('https://')) {
     console.log(`protocol rejected: ${origin}`)
@@ -465,7 +464,7 @@ console.log('a')
     return res.sendStatus(200)
   }
 
-  console.log(`Bitcoin RPC URL: ${BCRPC_URL} ${BCRPC_USER}`)
+  /*
   const url1 = `${MEMPOOL}/blocks/tip/hash`
   fetch(url1).then(r => r.text()).then(text => {
     const hash = text
@@ -474,14 +473,41 @@ console.log('a')
       res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
       return
     }
+  */
+  const url1 = `${BCRPC_URL}`
+  fetch(url1, {
+    headers: {
+      'Authorization': `Basic ${btoa(`${BCRPC_USER}:${BCRPC_PASS}`)}`,
+      'Content-Type': `text/plain;`,
+    },
+    body: JSON.stringify({
+      jsonrpc: '1.0',
+      id: 'id',
+      method: 'getblockchaininfo',
+      params: [],
+    })
+  }).then(r => r.json()).then(json => {
+    console.log(json)
+    const hash = json.result.bestblockhash
+    const block_height = json.result.blocks
 
+    if (!/[0-9a-fA-F]{64}/.test(hash)) {
+      console.error(`error getting chain tip: ${url1}`)
+      console.error(`${JSON.stringify(json)}`)
+      res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
+      return
+    }
+
+    /*
     const url2 = `${MEMPOOL}/block/${hash}`
     fetch(url2).then(r => r.json()).then(block => {
-      if (!block.height) {
-        console.error(`error getting tip block: ${hash}: ${url2}`)
-        res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
-        return
-      }
+    */
+    if (!block_height) {
+      console.error(`error getting chain tip: ${url1}`)
+      console.error(`${JSON.stringify(json)}`)
+      res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
+      return
+    }
 
       const loginId      = req.query.id
       const loginSig     = req.query.sig
@@ -508,7 +534,7 @@ console.log('a')
       successHandler = payload => {
         const data = {
           payload,
-          chaintip: block.height,
+          chaintip: block_height,
           minihash: hash.substr(hash.length-4),
         }
         if (readSignins && permissions_db.data['signins']?.includes(payload.id)) {
@@ -671,19 +697,19 @@ console.log('a')
           existingPayload = undefined
           console.error('Token verification failed:', e.message);
           //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(block.height, randomid, undefined, undefined)
+          finisher(block_height, randomid, undefined, undefined)
           return
         }
         if (!existingPayload?.t) {
           console.error('Token is missing t:', existingPayload);
           //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(block.height, randomid, undefined, undefined)
+          finisher(block_height, randomid, undefined, undefined)
           return
         }
         if (!existingPayload?.id) {
           console.error('Token is missing id:', existingPayload);
           //res.status(200).send('{"error":"Invalid session token."}')
-          finisher(block.height, randomid, undefined, undefined)
+          finisher(block_height, randomid, undefined, undefined)
           return
         }
       }
@@ -692,7 +718,7 @@ console.log('a')
         return
       }
 
-      const b = block.height
+      const b = block_height
       const y = Math.floor(b / 52500)
       const yb = b % 52500
       const ym = Math.floor(yb / 4375)
@@ -809,13 +835,15 @@ console.log('a')
       } else {
         finisher(b, randomid, undefined, undefined)
       }
+    /*
     }).catch(e => {
       console.error(`error getting block: ${e}: ${url2}`)
       res.status(200).send(`{"error":"Unable to get block: ${maskIP(url2)}"}`)
     })
+    */
   }).catch(e => {
-    console.error(`error getting blockchain tip: ${e}: ${url1}`)
-    res.status(200).send(`{"error":"Unable to get blockchain tip: ${maskIP(url1)}"}`)
+    console.error(`fetch/catch-all error`)
+    res.status(200).send(`{"error":"An error occurred."}`)
   })
 
 }
@@ -836,17 +864,43 @@ console.log(`c`)
   }
 
   // establish block time
+  /*
   fetch(`${MEMPOOL}/blocks/tip/hash`).then(r => r.text()).then(text => {
+  */
+  const url1 = `${BCRPC_URL}`
+  fetch(url1, {
+    headers: {
+      'Authorization': `Basic ${btoa(`${BCRPC_USER}:${BCRPC_PASS}`)}`,
+      'Content-Type': `text/plain;`,
+    },
+    body: JSON.stringify({
+      jsonrpc: '1.0',
+      id: 'id',
+      method: 'getblockchaininfo',
+      params: [],
+    })
+  }).then(r => r.json()).then(json => {
+    console.log(json)
+    const hash = json.result.bestblockhash
+    const block_height = json.result.blocks
 
-    const hash = text
-    if (!/[0-9a-f]/.test(hash)) {
-      console.log(`error getting block tip: ${text}`)
-      res.status(503).send('The mempool service is unavailable: please inform the administrator.')
+    if (!/[0-9a-fA-F]{64}/.test(hash)) {
+      console.error(`error getting chain tip: ${url1}`)
+      console.error(`${JSON.stringify(json)}`)
+      res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
+      return
+    }
+    if (!block_height) {
+      console.error(`error getting chain tip: ${url1}`)
+      console.error(`${JSON.stringify(json)}`)
+      res.status(200).send('{"error":"The blockchain service is unavailable: please inform the administrator."}')
       return
     }
 
+    /*
     fetch(`${MEMPOOL}/block/${hash}`).then(r => r.json()).then(block => {
-      const b = block.height
+    */
+      const b = block_height
       const y = Math.floor(b / 52500)
       const yb = b % 52500
       const ym = Math.floor(yb / 4375)
@@ -998,7 +1052,7 @@ console.log(`c`)
           })
         }
       }
-    })
+    //})
   })
 })
 
