@@ -461,6 +461,7 @@ console.log('a')
     return res.sendStatus(200)
   }
 
+  debug.log(`Bitcoin RPC URL: ${BCRPC}`)
   const url1 = `${MEMPOOL}/blocks/tip/hash`
   fetch(url1).then(r => r.text()).then(text => {
     const hash = text
